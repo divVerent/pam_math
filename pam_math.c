@@ -8,7 +8,7 @@
 // TODO: make this dynamic (i.e. allocate strings on demand).
 #define LINE_SIZE 80
 
-enum { ADD, SUB, MUL, DIV, MOD };
+enum { ADD, SUB, MUL, DIV, MOD, REM, NUM_OPS };
 
 typedef struct {
   int questions;
@@ -62,9 +62,11 @@ config_t get_config(const char *user, int argc, const char **argv) {
         } else if (*p == '*') {
           config.ops |= (1 << MUL);
         } else if (*p == '/') {
-          config.ops |= (1 << SUB);
-        } else if (*p == '%') {
+          config.ops |= (1 << DIV);
+        } else if (*p == 'm') {
           config.ops |= (1 << MOD);
+        } else if (*p == 'r') {
+          config.ops |= (1 << REM);
         } else {
           fprintf(stderr, "Unexpected %.*sops= character in config: %c\n",
                   (int)(field - arg), arg, *p);
@@ -98,11 +100,11 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     int op;
 
     do {
-      op = rand() % 4;
+      op = rand() % NUM_OPS;
     } while ((config->ops & (1 << op)) == 0);
 
     const char *op_str;
-    int a, b, c, q;
+    int a, b, c, q, s;
     switch (op) {
     case ADD:
       a = config->amin + rand() % (config->amax - config->amin + 1);
@@ -127,6 +129,7 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       c = config->mmin + rand() % (config->mmax - config->mmin + 1);
       b = config->mmin + rand() % (config->mmax - config->mmin + 1);
       if (b == 0) {
+        // TODO: instead retry.
         b = 1;
       }
       a = c * b;
@@ -137,12 +140,29 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       q = config->mmin + rand() % (config->mmax - config->mmin + 1);
       b = config->mmin + rand() % (config->mmax - config->mmin + 1);
       if (b == 0) {
+        // TODO: instead retry.
         b = 1;
       }
-      c = rand() % b;
+      s = (b < 0 ? -1 : +1);
+      // mod result always agrees in sign with divisor.
+      c = s * (rand() % b);
       a = q * b + c;
-      // TODO: use LC_CYTPE to pick appropriate symbol.
       op_str = "mod";
+      break;
+    case REM:
+      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        // TODO: instead retry.
+        b = 1;
+      }
+      // rem result always agrees in sign with dividend.
+      s = (q < 0 ? -1 :
+           q > 0 ? +1 :
+           (rand() % 2) * 2 - 1);
+      c = s * (rand() % b);
+      a = q * b + c;
+      op_str = "rem";
       break;
     default:
       return PAM_SERVICE_ERR;
