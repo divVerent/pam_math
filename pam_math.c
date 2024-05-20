@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 
+// TODO: make this dynamic (i.e. allocate strings on demand).
 #define LINE_SIZE 80
 
 enum { ADD, SUB, MUL, DIV };
@@ -117,6 +118,7 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       a = config->mmin + rand() % (config->mmax - config->mmin + 1);
       b = config->mmin + rand() % (config->mmax - config->mmin + 1);
       c = a * b;
+      // TODO: use LC_CYTPE to pick appropriate symbol.
       op_str = "×";
       break;
     case DIV:
@@ -126,6 +128,7 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
         b = 1;
       }
       a = c * b;
+      // TODO: use LC_CYTPE to pick appropriate symbol.
       op_str = "÷";
       break;
     default:
