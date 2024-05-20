@@ -8,7 +8,7 @@
 // TODO: make this dynamic (i.e. allocate strings on demand).
 #define LINE_SIZE 80
 
-enum { ADD, SUB, MUL, DIV, MOD, REM, NUM_OPS };
+enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
 typedef struct {
   int questions;
@@ -67,6 +67,10 @@ config_t get_config(const char *user, int argc, const char **argv) {
           config.ops |= (1 << MOD);
         } else if (*p == 'r') {
           config.ops |= (1 << REM);
+        } else if (*p == 'd') {
+          config.ops |= (1 << DIV_WITH_MOD);
+        } else if (*p == 'q') {
+          config.ops |= (1 << QUOT_WITH_REM);
         } else {
           fprintf(stderr, "Unexpected %.*sops= character in config: %c\n",
                   (int)(field - arg), arg, *p);
@@ -104,7 +108,7 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     } while ((config->ops & (1 << op)) == 0);
 
     const char *op_str;
-    int a, b, c, q, s;
+    int a, b, c, q, r, s;
     switch (op) {
     case ADD:
       a = config->amin + rand() % (config->amax - config->amin + 1);
@@ -163,6 +167,34 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       c = s * (rand() % b);
       a = q * b + c;
       op_str = "rem";
+      break;
+    case DIV_WITH_MOD:
+      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        // TODO: instead retry.
+        b = 1;
+      }
+      s = (b < 0 ? -1 : +1);
+      // mod result always agrees in sign with divisor.
+      r = s * (rand() % b);
+      a = c * b + r;
+      op_str = "div";
+      break;
+    case QUOT_WITH_REM:
+      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        // TODO: instead retry.
+        b = 1;
+      }
+      // rem result always agrees in sign with dividend.
+      s = (c < 0 ? -1 :
+           c > 0 ? +1 :
+           (rand() % 2) * 2 - 1);
+      r = s * (rand() % b);
+      a = c * b + r;
+      op_str = "quot";
       break;
     default:
       return PAM_SERVICE_ERR;

@@ -11,6 +11,6 @@ podman run -i --pull=newer --rm --mount=type=bind,source=$PWD,target=/pam_math \
 		apt update
 		apt install pamtester
 		install -m755 /pam_math/pam_math.so /lib/x86_64-linux-gnu/security/
-		echo "auth requisite pam_math.so .questions=5 .amax=100 .mmax=10 .ops=+-*/mr" > /etc/pam.d/math
+		echo "auth requisite pam_math.so .questions=5 .amax=100 .mmax=10 .ops=+-*/mrdq" > /etc/pam.d/math
 		pamtester math u authenticate
 	'

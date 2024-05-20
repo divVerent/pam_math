@@ -34,14 +34,14 @@ overrides it for that specific user.
 The following fields can be set:
 
 | Field     | Default | Meaning                                                                                                     |
-|-----------|---------|---------------------------------------------------------------------------------------------------------------|
-| questions | 3       | Number of questions to ask (set to 0 to disable).                                                             |
-| attempts  | 3       | Number of attempts per question (exceeding this fails authentication).                                        |
-| amin      | 0       | Minimum number to occur in additive math problems posed.                                                      |
-| amax      | 10      | Maximum number to occur in additive math problems posed.                                                      |
-| mmin      | 2       | Minimum number to occur in multiplicative math problems posed.                                                |
-| mmax      | 9       | Maximum number to occur in multiplicative math problems posed.                                                |
-| ops       |         | String of math operators to use in problems posed (use "+-\*/mr" to include all, and leave unset to disable). |
+|-----------|---------|-----------------------------------------------------------------------------------------------------------------|
+| questions | 3       | Number of questions to ask (set to 0 to disable).                                                               |
+| attempts  | 3       | Number of attempts per question (exceeding this fails authentication).                                          |
+| amin      | 0       | Minimum number to occur in additive math problems posed.                                                        |
+| amax      | 10      | Maximum number to occur in additive math problems posed.                                                        |
+| mmin      | 2       | Minimum number to occur in multiplicative math problems posed.                                                  |
+| mmax      | 9       | Maximum number to occur in multiplicative math problems posed.                                                  |
+| ops       |         | String of math operators to use in problems posed (use "+-\*/mrdq" to include all, and leave unset to disable). |
 
 Note that the `min` and `max` pairs of options apply directly for
 addition and multiplication problems, while for subtraction or divison
