@@ -4,6 +4,8 @@ set -ex
 
 gcc -Wall -fPIC -shared -O3 -o pam_math.so pam_math.c
 
+# TODO: migrate to libpam-wrapper to not need podman.
+
 podman run -i --pull=newer --rm --mount=type=bind,source=$PWD,target=/pam_math \
 	docker.io/library/debian:stable /bin/sh -exc '
 		apt update
