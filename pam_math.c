@@ -8,7 +8,7 @@
 // TODO: make this dynamic (i.e. allocate strings on demand).
 #define LINE_SIZE 80
 
-enum { ADD, SUB, MUL, DIV };
+enum { ADD, SUB, MUL, DIV, MOD };
 
 typedef struct {
   int questions;
@@ -63,6 +63,8 @@ config_t get_config(const char *user, int argc, const char **argv) {
           config.ops |= (1 << MUL);
         } else if (*p == '/') {
           config.ops |= (1 << SUB);
+        } else if (*p == '%') {
+          config.ops |= (1 << MOD);
         } else {
           fprintf(stderr, "Unexpected %.*sops= character in config: %c\n",
                   (int)(field - arg), arg, *p);
@@ -100,7 +102,7 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     } while ((config->ops & (1 << op)) == 0);
 
     const char *op_str;
-    int a, b, c;
+    int a, b, c, q;
     switch (op) {
     case ADD:
       a = config->amin + rand() % (config->amax - config->amin + 1);
@@ -130,6 +132,17 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       a = c * b;
       // TODO: use LC_CYTPE to pick appropriate symbol.
       op_str = "÷";
+      break;
+    case MOD:
+      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        b = 1;
+      }
+      c = rand() % b;
+      a = q * b + c;
+      // TODO: use LC_CYTPE to pick appropriate symbol.
+      op_str = "mod";
       break;
     default:
       return PAM_SERVICE_ERR;
