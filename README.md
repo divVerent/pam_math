@@ -6,6 +6,8 @@ A simple PAM module that asks math questions at login time.
 
 This module is compiled as follows:
 
+TODO: make it an autoconf based build system?
+
     gcc -Wall -fPIC -shared -o pam_math.so pam_math.c
 
 ## Installing
