@@ -12,13 +12,15 @@
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
 typedef struct {
-  int questions;
-  int attempts;
+  int questions; // Used by pam_math.c.
+  int attempts;  // Used by pam_math.c.
   int amin;
   int amax;
   int mmin;
   int mmax;
   int ops;
+
+  int have_utf8; // Set from the locale.
 } config_t;
 
 // a + b must fit for all a, b in range.
@@ -207,13 +209,27 @@ static config_t get_config(const char *user, int argc, const char **argv) {
             config.amin, config.amax, config.mmin, config.mmax);
   }
 
+  if (config.ops == 0) {
+    config.questions = 0;
+  }
+
+  // RNG has to be initialized _somewhere_.
+  //
+  // NOTE: Technically it's evil to do this in a PAM module as it changes
+  // global state and can interfere with other threads.
+  srand(time(NULL));
+
+  // NOTE: This also is somewhat evil, as it can interfere with other threads.
+  char *prev_ctype = setlocale(LC_CTYPE, "");
+  config.have_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
+  setlocale(LC_CTYPE, prev_ctype);
+
   return config;
 }
 
 typedef int answer_state_t;
 
-static char *make_question(config_t *config, int have_utf8,
-                           answer_state_t *answer_state) {
+static char *make_question(config_t *config, answer_state_t *answer_state) {
   int op;
 
   do {
@@ -243,7 +259,7 @@ static char *make_question(config_t *config, int have_utf8,
       a = config->mmin + rand() % (config->mmax - config->mmin + 1);
       b = config->mmin + rand() % (config->mmax - config->mmin + 1);
       c = a * b;
-      if (have_utf8) {
+      if (config->have_utf8) {
         op_str = "×";
       } else {
         op_str = "*";
@@ -256,7 +272,7 @@ static char *make_question(config_t *config, int have_utf8,
         continue;
       }
       a = c * b;
-      if (have_utf8) {
+      if (config->have_utf8) {
         op_str = "÷";
       } else {
         op_str = "/";
@@ -298,7 +314,7 @@ static char *make_question(config_t *config, int have_utf8,
       // mod result always agrees in sign with divisor.
       r = s * (rand() % b);
       a = c * b + r;
-      if (have_utf8) {
+      if (config->have_utf8) {
         op_prefix = "⌊";
         op_str = "÷";
         op_suffix = "⌋";
@@ -325,7 +341,7 @@ static char *make_question(config_t *config, int have_utf8,
       r = s * (rand() % b);
       a = c * b + r;
       op_prefix = "[";
-      if (have_utf8) {
+      if (config->have_utf8) {
         op_str = "÷";
       } else {
         op_str = "/";
