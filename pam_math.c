@@ -1,5 +1,7 @@
 #include <langinfo.h>
+#include <limits.h>
 #include <locale.h>
+#include <math.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <stdio.h>
@@ -21,6 +23,19 @@ typedef struct {
   int mmax;
   int ops;
 } config_t;
+
+// a + b must fit for all a, b in range.
+#define AMIN_MIN (-(INT_MAX / 2))
+#define AMAX_MAX (INT_MAX / 2)
+
+// a * b (+ or -) c must fit for all a, b, c in range.
+#define MMIN_MIN (-((int)sqrt(INT_MAX) - 1))
+#define MMAX_MAX ((int)sqrt(INT_MAX) - 1)
+
+// This uses the assumption: INT_MIN < -INT_MAX.
+_Static_assert(
+    INT_MIN + INT_MAX <= 0,
+    "positive integer range must be smaller or equal negative integer range");
 
 config_t get_config(const char *user, int argc, const char **argv) {
   config_t config = {.questions = 3,
@@ -88,17 +103,113 @@ config_t get_config(const char *user, int argc, const char **argv) {
     fprintf(stderr, "Unexpected option in config: %s\n", arg);
   }
 
+  int fixed = 0;
+
+  // Fix reverse ranges.
+  if (config.amax < config.amin) {
+    fprintf(stderr, "Reverse additive range: %d to %d - swapping.\n",
+            config.amin, config.amax);
+    int h = config.amax;
+    config.amax = config.amin;
+    config.amin = h;
+    fixed = 1;
+  }
+  if (config.mmax < config.mmin) {
+    fprintf(stderr, "Reverse multiplicative range: %d to %d - swapping.\n",
+            config.mmin, config.mmax);
+    int h = config.mmax;
+    config.mmax = config.mmin;
+    config.mmin = h;
+    fixed = 1;
+  }
+
+  // Avoid integer overflow.
+  if (config.amin < AMIN_MIN) {
+    fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
+            config.amin, config.amax);
+    config.amin = AMIN_MIN;
+    fixed = 1;
+  }
+  if (config.amax < AMIN_MIN) {
+    fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
+            config.amax, config.amax);
+    config.amax = AMIN_MIN;
+    fixed = 1;
+  }
+  if (config.amin > AMAX_MAX) {
+    fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
+            config.amin, config.amin);
+    config.amin = AMAX_MAX;
+    fixed = 1;
+  }
+  if (config.amax > AMAX_MAX) {
+    fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
+            config.amin, config.amax);
+    config.amax = AMAX_MAX;
+    fixed = 1;
+  }
+  if (config.mmin < MMIN_MIN) {
+    fprintf(stderr,
+            "Overly large multiplicative range: %d to %d - shrinking.\n",
+            config.mmin, config.mmax);
+    config.mmin = MMIN_MIN;
+    fixed = 1;
+  }
+  if (config.mmax < MMIN_MIN) {
+    fprintf(stderr,
+            "Overly large multiplicative range: %d to %d - shrinking.\n",
+            config.mmax, config.mmax);
+    config.mmax = MMIN_MIN;
+    fixed = 1;
+  }
+  if (config.mmin > MMAX_MAX) {
+    fprintf(stderr,
+            "Overly large multiplicative range: %d to %d - shrinking.\n",
+            config.mmin, config.mmin);
+    config.mmin = MMAX_MAX;
+    fixed = 1;
+  }
+  if (config.mmax > MMAX_MAX) {
+    fprintf(stderr,
+            "Overly large multiplicative range: %d to %d - shrinking.\n",
+            config.mmin, config.mmax);
+    config.mmax = MMAX_MAX;
+    fixed = 1;
+  }
+
   // There must be at least two options for each range.
-  if (config.amax - config.amin < 2) {
+  if (config.amax < config.amin + 2) {
     fprintf(stderr, "Invalid additive range: %d to %d - expanding.\n",
             config.amin, config.amax);
-    config.amax = config.amin + 2;
+    // To avoid integer overflow, we pick one of the two possible ways to fix it
+    // - namely whichever grows towards zero.
+    if (config.amin < 0) {
+      config.amax = config.amin + 2;
+    } else {
+      config.amin = config.amax - 2;
+    }
+    fixed = 1;
   }
-  if (config.mmax - config.mmin < 2) {
+  if (config.mmax < config.mmin + 2) {
     fprintf(stderr, "Invalid multiplicative range: %d to %d - expanding.\n",
             config.mmin, config.mmax);
-    config.mmax = config.mmin + 2;
+    // To avoid integer overflow, we pick one of the two possible ways to fix it
+    // - namely whichever grows towards zero.
+    if (config.mmin < 0) {
+      config.mmax = config.mmin + 2;
+    } else {
+      config.mmin = config.mmax - 2;
+    }
+    fixed = 1;
   }
+
+  if (fixed) {
+    fprintf(stderr,
+            "Fixed additive range: %d to %d\n"
+            "Fixed multiplicative range: %d to %d\n",
+            config.amin, config.amax, config.mmin, config.mmax);
+  }
+
   return config;
 }
 
@@ -256,9 +367,10 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       char question[LINE_SIZE];
       snprintf(question, sizeof(question), "%sWhat is %s%s%d%s %s %s%d%s%s? ",
                prefix,                                //
-               op_prefix, //
+               op_prefix,                             //
                a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
-               op_str, b < 0 ? "(" : "", b, b < 0 ? ")" : "",
+               op_str,                                //
+               b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
                op_suffix);
       question[sizeof(question) - 1] = 0;
 
