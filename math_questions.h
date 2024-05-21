@@ -1,12 +1,8 @@
-#include <langinfo.h>
-#include <limits.h>
-#include <locale.h>
-#include <math.h>
-#include <security/pam_appl.h>
-#include <security/pam_modules.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <limits.h>  // for INT_MAX, INT_MIN
+#include <math.h>    // for sqrt
+#include <stdio.h>   // for fprintf, sscanf, stderr, NULL, size_t
+#include <stdlib.h>  // for rand
+#include <string.h>  // for strncmp, strlen
 
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 

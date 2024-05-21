@@ -1,6 +1,7 @@
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <limits.h>  // for INT_MAX
+#include <stdarg.h>  // for va_end, va_start, va_list
+#include <stdio.h>   // for fprintf, vsnprintf, stderr
+#include <stdlib.h>  // for abort, malloc
 
 static char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
