@@ -1,0 +1,11 @@
+# This configures that user `user` needs to learn the basic
+# multiplication table.
+
+auth required pam_math.so \
+	.questions=3 .amin=1 .amax=100 .mmin=2 .mmax=9 \
+	adder.ops=+ adder.amax=10 \
+	subtracter.ops=+- \
+	multiplier.ops=+-* \
+	divider.ops=+-*/ \
+	remainder.ops=+-*/dm
+	supercalculator.ops=+-*/dmqr supercalculator.amax=10000 supercalculator.mmax=100

@@ -120,11 +120,8 @@ or specify an exact directory by
     range from 1 to 99 for addition and 2 to 9 for multiplication
     inputs.
 
-    <!--
-    TODO:
     More complex examples can be found in the [`examples`](examples/)
     directory.
-    -->
 
 ## Reference
 

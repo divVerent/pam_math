@@ -1,0 +1,5 @@
+# This configures that user `user` needs to learn all basic math operations -
+# multiplication of one digit and addition of two digit numbers.
+
+auth required pam_math.so \
+	user.questions=2 user.amin=1 user.amax=100 user.mmin=2 user.mmax=9 user.ops=+-*/

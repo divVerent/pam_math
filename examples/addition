@@ -1,0 +1,4 @@
+# This configures that user `user` just learns addition, including zero.
+
+auth required pam_math.so \
+	user.questions=1 user.amin=0 user.amax=10 user.ops=+
