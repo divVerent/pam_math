@@ -2,19 +2,17 @@
 
 set -ex
 
-gcc -Wall -Wextra -Wpedantic -fPIC -shared -O3 -o pam_math.so pam_math.c
+config=${1:-examples/all_basic}
+user=${2:-user}
 
 tmpdir=$(mktemp -d -t pam_math_test.XXXXXX)
 trap 'rm -vrf "$tmpdir"' EXIT
 
-cat >"$tmpdir/math" <<EOF
-auth required $PWD/pam_math.so \
-  .attempts=3 .amin=-10 .amax=10 .mmin=-10 .mmax=10 \
-  .questions=3 \
-  .ops=+-*/dqrm
-EOF
+name=${config##*/}
+
+sed -e "s, pam_math\.so , $PWD/pam_math.so ,g" "$config" > "$tmpdir/$name"
 
 export LD_PRELOAD=libpam_wrapper.so
 export PAM_WRAPPER=1
 export PAM_WRAPPER_SERVICE_DIR=$tmpdir
-pamtester math u authenticate
+pamtester "$name" "$user" authenticate

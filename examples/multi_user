@@ -1,5 +1,9 @@
-# This configures that user `user` needs to learn the basic
-# multiplication table.
+# This configures multiple users:
+# - adder learns how to add up to 10
+# - subtractor learns how to add and subtract up to 100
+# - multiplier learns how to multiply single digit numbers
+# - divider learns how to divide with single digit divisor and result
+# - supercalculator is a robot :)
 
 auth required pam_math.so \
 	.questions=3 .amin=1 .amax=100 .mmin=2 .mmax=9 \
@@ -7,5 +11,6 @@ auth required pam_math.so \
 	subtracter.ops=+- \
 	multiplier.ops=+-* \
 	divider.ops=+-*/ \
-	remainder.ops=+-*/dm
-	supercalculator.ops=+-*/dmqr supercalculator.amax=10000 supercalculator.mmax=100
+	supercalculator.ops=+-*/dmqr \
+		supercalculator.amin=-100000000 supercalculator.amax=100000000 \
+		supercalculator.mmin=-10000 supercalculator.mmax=10000
