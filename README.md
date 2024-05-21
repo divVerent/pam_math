@@ -58,16 +58,24 @@ implement the full PAM conversation, such as:
 
 This module is compiled as follows:
 
-TODO: make it an autoconf based build system?
-
-    gcc -Wall -Wextra -Wpedantic -fPIC -shared -O3 -o pam_math.so pam_math.c
+    make
 
 ## Installing
 
 This module needs to be installed where your distribution expects PAM
-modules. For example, on Debian on x86-64, this would be:
+modules.
 
-    sudo install -m755 pam_math.so /usr/lib/x86_64-linux-gnu/security/
+It normally autodetects the location; run
+
+    make -n install
+
+to see where it will install, and then install there using
+
+    sudo make install
+
+or specify an exact directory by
+
+    sudo make install PAM_LIBRARY_PATH=/your/path/to/pam/libraries
 
 ## Configuring
 
