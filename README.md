@@ -1,4 +1,4 @@
-# pam_math
+\#pam_math
 
 A simple PAM module that asks math questions at login time.
 
@@ -35,7 +35,7 @@ overrides it for that specific user.
 
 The following fields can be set:
 
-| Field     | Default | Meaning                                                                                                     |
+| Field     | Default | Meaning                                                                                                         |
 |-----------|---------|-----------------------------------------------------------------------------------------------------------------|
 | questions | 3       | Number of questions to ask (set to 0 to disable).                                                               |
 | attempts  | 3       | Number of attempts per question (exceeding this fails authentication).                                          |
@@ -44,6 +44,19 @@ The following fields can be set:
 | mmin      | 2       | Minimum number to occur in multiplicative math problems posed.                                                  |
 | mmax      | 9       | Maximum number to occur in multiplicative math problems posed.                                                  |
 | ops       |         | String of math operators to use in problems posed (use "+-\*/mrdq" to include all, and leave unset to disable). |
+
+The following `ops` are available:
+
+| Character | Operation               | Formula               | Limits               | Notes                                         |
+|-----------|-------------------------|-----------------------|----------------------|-----------------------------------------------|
+| `+`       | Addition                | `x = a + b`           | `amin ≤ a, b ≤ amax` |                                               |
+| `-`       | Subtraction             | `x = a - b`           | `amin ≤ b, x ≤ amax` |                                               |
+| `*`       | Multiplication          | `x = a \* b`          | `mmin ≤ a, b ≤ mmax` |                                               |
+| `/`       | Remainder-less division | `x = a / b`           | `mmin ≤ b, x ≤ mmax` |                                               |
+| `d`       | Division w/ remainder   | `x = ⌊a / b⌋`         | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `b` (Python style) |
+| `q`       | Division w/ remainder   | `x = [a / b]`         | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `a` (C style)      |
+| `m`       | Division remainder      | `x = a - b * ⌊a / b⌋` | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `b` (Python style) |
+| `r`       | Division remainder      | `x = a - b * [a / b]` | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `a` (C style)      |
 
 Note that the `min` and `max` pairs of options apply directly for
 addition and multiplication problems, while for subtraction or divison
@@ -60,10 +73,6 @@ would be asked if `.mmin=2 .mmax=4 .ops=/`:
      8 ÷ 4 = 2
     12 ÷ 4 = 3
     16 ÷ 4 = 4
-
-## Contributing
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.
 
 ## License
 
