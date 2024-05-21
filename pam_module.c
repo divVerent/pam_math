@@ -1,6 +1,11 @@
 #include <security/pam_modules.h> // for PAM_EXTERN, pam_get_user, pam_sm_a...
 #include <stdlib.h>               // for free, NULL
 
+#ifdef __FreeBSD__
+// This defines some stuff that's defined in pam_modules.h on Linux.
+#include <security/pam_appl.h>
+#endif
+
 #include "asprintf.h"  // for d0_asprintf
 #include "questions.h" // for build_config, check_answer, make_q...
 

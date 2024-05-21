@@ -23,14 +23,10 @@ struct config_s {
   int ops;
 
   int use_utf8; // Set from the locale.
-} ;
+};
 
-int num_questions(config_t *config) {
-return config->questions;
-}
-int num_attempts(config_t *config) {
-return config->attempts;
-}
+int num_questions(config_t *config) { return config->questions; }
+int num_attempts(config_t *config) { return config->attempts; }
 
 // a + b must fit for all a, b in range.
 #define AMIN_MIN (-(INT_MAX / 2))
@@ -40,21 +36,21 @@ return config->attempts;
 #define MMIN_MIN (-((int)sqrt(INT_MAX) - 1))
 #define MMAX_MAX ((int)sqrt(INT_MAX) - 1)
 
-// This uses the assumption: INT_MIN < -INT_MAX.
-_Static_assert(
-    INT_MIN + INT_MAX <= 0,
-    "positive integer range must be smaller or equal negative integer range");
+// This uses the assumption: INT_MIN <= -INT_MAX.
+#if INT_MIN + INT_MAX > 0
+#error positive integer range must be smaller or equal negative integer range
+#endif
 
 config_t *build_config(const char *user, int argc, const char **argv) {
   config_t *config = malloc(sizeof(config_t));
-  config->questions=3;
-  config->attempts=3;
-  config->amin=0;
-  config->amax=10;
-  config->mmin=2;
-  config->mmax=9;
-  config->ops=0;
-  config->use_utf8=-1;
+  config->questions = 3;
+  config->attempts = 3;
+  config->amin = 0;
+  config->amax = 10;
+  config->mmin = 2;
+  config->mmax = 9;
+  config->ops = 0;
+  config->use_utf8 = -1;
   size_t userlen = strlen(user);
   for (int i = 0; i < argc; ++i) {
     const char *arg = argv[i];
@@ -253,8 +249,8 @@ config_t *build_config(const char *user, int argc, const char **argv) {
 }
 
 struct answer_state_s {
-	int answer;
-} ;
+  int answer;
+};
 
 char *make_question(config_t *config, answer_state_t **answer_state) {
   int op;
