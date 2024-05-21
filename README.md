@@ -38,7 +38,8 @@ This includes:
     -   su
     -   sudo
 
-This module is notably not compatible with:
+This module is notably not compatible with programs that do not
+implement the full PAM conversation, such as:
 
 -   Login managers:
     -   Entrance
@@ -46,7 +47,11 @@ This module is notably not compatible with:
     -   SDDM
 -   Screen lockers:
     -   i3lock
-    -   screen
+    -   screen (however other screen functionality is working fine, so
+        recommending to put `bind x` and `bind ^X` in your `.screenrc`
+        to prevent the `lockscreen` command from being invoked by
+        accident)
+    -   slock
     -   Swaylock
 
 ## Compiling
