@@ -12,12 +12,15 @@ TODO: make it an autoconf based build system?
 
 ## Installing
 
+This module needs to be installed where your distribution expects PAM
+modules. For example, on Debian on x86-64, this would be:
+
     sudo install -m755 pam_math.so /usr/lib/x86_64-linux-gnu/security/
 
 ## Configuring
 
 This module is configured entirely in `/etc/pam.d/common-auth` as
-follows:
+follows (a good bet would be putting this at the end of the file):
 
     auth required pam_math.so \
       .attempts=3 .min=2 .max=9 \
