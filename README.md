@@ -32,6 +32,13 @@ follows (a good bet would be putting this at the end of the file):
       k3.questions=2 k3.mmax=5 k3.ops=* \
       rpolzer.questions=1 rpolzer.max=19 rpolzer.ops=+-*/
 
+NOTE: This is **dangerous**! A mistake in this file can cause login to
+no longer work and may require recovery media to undo. It is thus
+recommended to keep a terminal with the editor on this file open, and to
+try out login on another terminal until it works (you can use
+`pamtester common-auth $USER authenticate` to test that). You have been
+warned!
+
 Each command-line argument is of the form `.field=value` or
 `user.field=value`, whereas the former sets a default and the latter
 overrides it for that specific user.
