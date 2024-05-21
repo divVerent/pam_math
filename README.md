@@ -2,7 +2,7 @@
 
 A simple PAM module that asks math questions at login time.
 
-[![Video](https://img.youtube.com/vi/d78-0j9jLWs/maxresdefault.jpg)](https://youtu.be/d78-0j9jLWs)
+[![Video](https://img.youtube.com/vi/d78-0j9jLWs/sddefault.jpg)](https://youtu.be/d78-0j9jLWs)
 
 ## WARNING
 
@@ -23,11 +23,13 @@ conversations.
 This includes:
 
 -   Login managers:
+    -   GDM
     -   LightDM
     -   login
+    -   XDM (requires `.use_utf8=no`)
 -   Screen lockers:
-    -   physlock\*
-    -   vlock\*
+    -   physlock (won't see numbers as they are entered, but will work)
+    -   vlock (won't see numbers as they are entered, but will work)
     -   XScreenSaver
     -   XSecureLock
 -   Other:
@@ -36,26 +38,16 @@ This includes:
     -   su
     -   sudo
 
-\*: Applications where the results cannot be seen while typing them in,
-but where the module otherwise works correctly.
-
 This module is notably not compatible with:
 
 -   Login managers:
+    -   Entrance
+    -   LXDM
+    -   SDDM
 -   Screen lockers:
     -   i3lock
     -   screen
     -   Swaylock
-
-<!--
-To be tested:
-
--   Entrance
--   GDM
--   LXDM
--   SDDM
--   XDM
--->
 
 ## Compiling
 
@@ -126,15 +118,16 @@ specific user.
 
 The following fields can be set:
 
-| Field     | Default | Meaning                                                                                                         |
-|-----------|---------|-----------------------------------------------------------------------------------------------------------------|
-| questions | 3       | Number of questions to ask (set to 0 to disable).                                                               |
-| attempts  | 3       | Number of attempts per question (exceeding this fails authentication).                                          |
-| amin      | 0       | Minimum number to occur in additive math problems posed.                                                        |
-| amax      | 10      | Maximum number to occur in additive math problems posed.                                                        |
-| mmin      | 2       | Minimum number to occur in multiplicative math problems posed.                                                  |
-| mmax      | 9       | Maximum number to occur in multiplicative math problems posed.                                                  |
-| ops       |         | String of math operators to use in problems posed (use "+-\*/mrdq" to include all, and leave unset to disable). |
+| Field     | Default | Meaning                                                                                                        |
+|-----------|---------|----------------------------------------------------------------------------------------------------------------|
+| questions | `3`     | Number of questions to ask (set to 0 to disable).                                                              |
+| attempts  | `3`     | Number of attempts per question (exceeding this fails authentication).                                         |
+| amin      | `0`     | Minimum number to occur in additive math problems posed.                                                       |
+| amax      | `10`    | Maximum number to occur in additive math problems posed.                                                       |
+| mmin      | `2`     | Minimum number to occur in multiplicative math problems posed.                                                 |
+| mmax      | `9`     | Maximum number to occur in multiplicative math problems posed.                                                 |
+| ops       |         | String of math operators to use in problems posed (use `+-*/dqmr` to include all, and leave unset to disable). |
+| use_utf8  | `auto`  | `no` to disable UTF-8 support, `yes` to enable, `auto` to detect by locale                                     |
 
 The following `ops` are available:
 

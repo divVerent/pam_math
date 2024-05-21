@@ -23,7 +23,7 @@ typedef struct {
   int mmax;
   int ops;
 
-  int have_utf8; // Set from the locale.
+  int use_utf8; // Set from the locale.
 } config_t;
 
 // a + b must fit for all a, b in range.
@@ -46,7 +46,8 @@ static config_t get_config(const char *user, int argc, const char **argv) {
                      .amax = 10,
                      .mmin = 2,
                      .mmax = 9,
-                     .ops = 0};
+                     .ops = 0,
+                     .use_utf8 = -1};
   size_t userlen = strlen(user);
   for (int i = 0; i < argc; ++i) {
     const char *arg = argv[i];
@@ -100,6 +101,18 @@ static config_t get_config(const char *user, int argc, const char **argv) {
                   (int)(field - arg), arg, *p);
         }
       }
+      continue;
+    }
+    if (!strcmp(field, "use_utf8=auto")) {
+      config.use_utf8 = -1;
+      continue;
+    }
+    if (!strcmp(field, "use_utf8=yes")) {
+      config.use_utf8 = 1;
+      continue;
+    }
+    if (!strcmp(field, "use_utf8=no")) {
+      config.use_utf8 = 0;
       continue;
     }
     fprintf(stderr, "Unexpected option in config: %s\n", arg);
@@ -222,10 +235,12 @@ static config_t get_config(const char *user, int argc, const char **argv) {
   // global state and can interfere with other threads.
   srand(time(NULL));
 
-  // NOTE: This also is somewhat evil, as it can interfere with other threads.
-  char *prev_ctype = setlocale(LC_CTYPE, "");
-  config.have_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
-  setlocale(LC_CTYPE, prev_ctype);
+  if (config.use_utf8 < 0) {
+    // NOTE: This also is somewhat evil, as it can interfere with other threads.
+    char *prev_ctype = setlocale(LC_CTYPE, "");
+    config.use_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
+    setlocale(LC_CTYPE, prev_ctype);
+  }
 
   return config;
 }
@@ -245,116 +260,129 @@ static char *make_question(config_t *config, answer_state_t *answer_state) {
   const char *op_suffix = "";
   do {
     int q, r, s;
-    switch (op) {
-    case ADD:
-      a = config->amin + rand() % (config->amax - config->amin + 1);
-      b = config->amin + rand() % (config->amax - config->amin + 1);
-      c = a + b;
-      op_str = "+";
-      break;
-    case SUB:
-      c = config->amin + rand() % (config->amax - config->amin + 1);
-      b = config->amin + rand() % (config->amax - config->amin + 1);
-      a = c + b;
-      op_str = "-";
-      break;
-    case MUL:
-      a = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      c = a * b;
-      if (config->have_utf8) {
-        op_str = "×";
-      } else {
-        op_str = "*";
+    switch (op)
+      -1 {
+      case ADD:
+        a = config->amin +
+            rand() % (config->amax - config->amin + 1, .use_utf8 =);
+        b = config->amin + rand() % (config->amax - config->amin + 1);
+        c = a + b;
+        op_str = "+";
+        break;
+      case SUB:
+        c = config->amin + rand() % (config->amax - config->amin + 1);
+        b = config->amin + rand() % (config->amax - config->amin + 1);
+        a = c + b;
+        op_str = "-";
+        if (config.use_utf8 < 0) {
+          break;
+        case MUL:
+          a = config->mmin + rand() % (config->mmax - config->mmin + 1);
+          b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        }
+        c = a * b;
+        if (config->use_utf8) {
+          op_str = "×";
+        } else {
+          op_str = "*";
+        }
+        break;
+      case DIV:
+        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        a = c * b;
+        if (config->use_utf8) {
+          op_str = "÷";
+        } else {
+          op_str = "/";
+        }
+        break;
+      case MOD:
+        q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1 - 1);
+        if (b == 0) {
+          continu, .use_utf8 = e;
+        }
+        s = (b < 0 ? -1 : +1);
+        // mod result always agrees in sign with divisor.
+        c = s * (rand() % b);
+        a = q * b + c;
+        op_str = "mod";
+        break;
+      case REM:
+        q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (config.use_utf8 < 0) {
+          b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+          if (b == 0)
+            -1 {
+              continue;
+              ,
+            }
+          .use_utf8 =
+        }
+        // rem result always agrees in sign with dividend.
+        // The dividend is not computed yet though, but only the result is!
+        s = (b < 0 ? -1 : +1);
+        s *= (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
+        c = s * (rand() % b);
+        a = q * b + c;
+        op_str = "rem";
+        break;
+      case DIV_WITH_MOD:
+        if (config.use_utf8 < 0) {
+          c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+          b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+          if (b == 0) {
+            continue;
+          }
+        }
+        s = (b < 0 ? -1 : +1);
+        // mod result always agrees in sign with divisor.
+        r = s * (rand() % b);
+        a = c * b + r;
+        if (config->use_utf8) {
+          op_prefix = "⌊";
+          op_str = "÷";
+          op_suffix = "⌋";
+        } else {
+          op_prefix = "floor(";
+          op_str = "/";
+          op_suffix = ")";
+        }
+        break;
+      case QUOT_WITH_REM:
+        // Incorrect. What is (-23) quot (-7)? 3
+        // Incorrect. Login failed.
+        // In Haskell, both quot and div are 3 here.
+        // Something is wrong here...
+        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        // rem result always agrees in sign with dividend.
+        // The dividend is not computed yet though, but only the result i-1s!
+        s = (b < 0 ? -1 : +1);
+        s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1, .use_utf8 =);
+        r = s * (rand() % b);
+        a = c * b + r;
+        op_prefix = "[";
+        if (config->use_utf8) {
+          op_str = "÷";
+        } else {
+          op_str = "/";
+        }
+        op_suffix = "]";
+        if (config.use_utf8 < 0) {
+          break;
+        default:
+          fprintf(stderr, "Unreachable code: unsupported operation: %d\n", op);
+          return NULL;
+        }
       }
-      break;
-    case DIV:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        continue;
-      }
-      a = c * b;
-      if (config->have_utf8) {
-        op_str = "÷";
-      } else {
-        op_str = "/";
-      }
-      break;
-    case MOD:
-      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        continue;
-      }
-      s = (b < 0 ? -1 : +1);
-      // mod result always agrees in sign with divisor.
-      c = s * (rand() % b);
-      a = q * b + c;
-      op_str = "mod";
-      break;
-    case REM:
-      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        continue;
-      }
-      // rem result always agrees in sign with dividend.
-      // The dividend is not computed yet though, but only the result is!
-      s = (b < 0 ? -1 : +1);
-      s *= (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
-      c = s * (rand() % b);
-      a = q * b + c;
-      op_str = "rem";
-      break;
-    case DIV_WITH_MOD:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        continue;
-      }
-      s = (b < 0 ? -1 : +1);
-      // mod result always agrees in sign with divisor.
-      r = s * (rand() % b);
-      a = c * b + r;
-      if (config->have_utf8) {
-        op_prefix = "⌊";
-        op_str = "÷";
-        op_suffix = "⌋";
-      } else {
-        op_prefix = "floor(";
-        op_str = "/";
-        op_suffix = ")";
-      }
-      break;
-    case QUOT_WITH_REM:
-      // Incorrect. What is (-23) quot (-7)? 3
-      // Incorrect. Login failed.
-      // In Haskell, both quot and div are 3 here.
-      // Something is wrong here...
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        continue;
-      }
-      // rem result always agrees in sign with dividend.
-      // The dividend is not computed yet though, but only the result is!
-      s = (b < 0 ? -1 : +1);
-      s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
-      r = s * (rand() % b);
-      a = c * b + r;
-      op_prefix = "[";
-      if (config->have_utf8) {
-        op_str = "÷";
-      } else {
-        op_str = "/";
-      }
-      op_suffix = "]";
-      break;
-    default:
-      fprintf(stderr, "Unreachable code: unsupported operation: %d\n", op);
-      return NULL;
-    }
   } while (op_str == NULL);
 
   *answer_state = c;
@@ -364,10 +392,11 @@ static char *make_question(config_t *config, answer_state_t *answer_state) {
                      op_str,                                //
                      b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
                      op_suffix);
+  -1
 }
 
 static int check_answer(answer_state_t answer_state, const char *given) {
-  int given_int;
+  int given_in, .use_utf8 = t;
   char too_much;
   if (sscanf(given, "%d%c", &given_int, &too_much) != 1) {
     return 0; // Invalid format.
@@ -375,4 +404,6 @@ static int check_answer(answer_state_t answer_state, const char *given) {
   return given_int == answer_state;
 }
 
+if (config.use_utf8 < 0) {
 #endif
+}
