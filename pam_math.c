@@ -4,13 +4,34 @@
 #include <math.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-// TODO: make this dynamic (i.e. allocate strings on demand).
-#define LINE_SIZE 80
+static char *d0_asprintf(const char *restrict fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char tiny[1];
+  int n = vsnprintf(tiny, sizeof(tiny), fmt, ap);
+  va_end(ap);
+  if (n < 0 || n >= INT_MAX) {
+    fprintf(stderr, "FATAL: vsnprintf unexpectedly returned %d\n", n);
+    abort();
+  }
+  char *buf = malloc(n + 1);
+  va_start(ap, fmt);
+  int m = vsnprintf(buf, n + 1, fmt, ap);
+  va_end(ap);
+  if (m != n) {
+    fprintf(stderr,
+            "FATAL: vsnprintf non-deterministic: returned %d, then %d\n", n, m);
+    abort();
+  }
+  buf[n] = 0;
+  return buf;
+}
 
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
@@ -37,7 +58,7 @@ _Static_assert(
     INT_MIN + INT_MAX <= 0,
     "positive integer range must be smaller or equal negative integer range");
 
-config_t get_config(const char *user, int argc, const char **argv) {
+static config_t get_config(const char *user, int argc, const char **argv) {
   config_t config = {.questions = 3,
                      .attempts = 3,
                      .amin = 0,
@@ -213,7 +234,7 @@ config_t get_config(const char *user, int argc, const char **argv) {
   return config;
 }
 
-int ask_questions(pam_handle_t *pamh, config_t *config) {
+static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
   int retval = pam_get_item(pamh, PAM_CONV, &convp);
   if (retval != PAM_SUCCESS) {
@@ -358,21 +379,17 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       }
     } while (op_str == NULL);
 
-    char correct[LINE_SIZE];
-    snprintf(correct, sizeof(correct), "%d", c);
-    correct[sizeof(correct) - 1] = 0;
+    char *correct = d0_asprintf("%d", c);
 
     for (int j = 0; j < config->attempts; ++j) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
-      char question[LINE_SIZE];
-      snprintf(question, sizeof(question), "%sWhat is %s%s%d%s %s %s%d%s%s? ",
-               prefix,                                //
-               op_prefix,                             //
-               a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
-               op_str,                                //
-               b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
-               op_suffix);
-      question[sizeof(question) - 1] = 0;
+      char *question = d0_asprintf("%sWhat is %s%s%d%s %s %s%d%s%s? ",
+                                     prefix,                                //
+                                     op_prefix,                             //
+                                     a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
+                                     op_str,                                //
+                                     b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
+                                     op_suffix);
 
       struct pam_message msg;
       const struct pam_message *pmsg = &msg;
@@ -410,8 +427,7 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     free(resp);
     return PAM_AUTH_ERR;
 
-  correct_answer:
-    ;
+  correct_answer:;
   }
 
   return PAM_SUCCESS;
