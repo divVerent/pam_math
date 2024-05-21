@@ -1,8 +1,8 @@
 #include <security/pam_modules.h> // for PAM_EXTERN, pam_get_user, pam_sm_a...
-#include <stdlib.h>               // for free
+#include <stdlib.h>               // for free, NULL
 
-#include "asprintf.h"       // for d0_asprintf
-#include "questions.h" // for config_t, check_answer, get_config
+#include "asprintf.h"  // for d0_asprintf
+#include "questions.h" // for build_config, check_answer, make_q...
 
 static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;

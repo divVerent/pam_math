@@ -1,17 +1,6 @@
 #ifndef MATH_QUESTIONS_H
 #define MATH_QUESTIONS_H
 
-#include <langinfo.h> // for nl_langinfo, CODESET
-#include <limits.h>   // for INT_MAX, INT_MIN
-#include <locale.h>   // for setlocale, NULL, LC_CTYPE
-#include <math.h>     // for sqrt
-#include <stdio.h>    // for fprintf, sscanf, stderr, NULL, size_t
-#include <stdlib.h>   // for rand, srand
-#include <string.h>   // for strncmp, strcmp, strlen
-#include <time.h>     // for time
-
-#include "asprintf.h" // for d0_asprintf
-
 typedef struct config_s config_t;
 
 config_t *build_config(const char *user, int argc, const char **argv);
