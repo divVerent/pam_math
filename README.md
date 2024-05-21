@@ -8,7 +8,7 @@ This module is compiled as follows:
 
 TODO: make it an autoconf based build system?
 
-    gcc -Wall -fPIC -shared -o pam_math.so pam_math.c
+    gcc -Wall -Wextra -Wpedantic -fPIC -shared -O3 -o pam_math.so pam_math.c
 
 ## Installing
 

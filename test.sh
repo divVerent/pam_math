@@ -2,7 +2,7 @@
 
 set -ex
 
-gcc -Wall -fPIC -shared -O3 -o pam_math.so pam_math.c
+gcc -Wall -Wextra -Wpedantic -fPIC -shared -O3 -o pam_math.so pam_math.c
 
 tmpdir=$(mktemp -d -t pam_math_test.XXXXXX)
 trap 'rm -vrf "$tmpdir"' EXIT
