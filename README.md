@@ -23,13 +23,13 @@ This module is configured entirely in `/etc/pam.d/common-auth` as
 follows (a good bet would be putting this at the end of the file):
 
     auth required pam_math.so \
-      .attempts=3 .min=2 .max=9 \
+      .attempts=3 .amin=2 .amax=9 .mmin=2 .mmax=9 \
       k1.questions=3 k1.ops=+-*/ \
-      k1g.questions=5 k1g.max=15 k1g.ops=*/ \
+      k1g.questions=5 k1g.mmax=15 k1g.ops=*/ \
       k2s.questions=3 k2s.ops=+-* \
       k2.questions=5 k2.ops=* \
       k3s.questions=1 k3s.ops=+- \
-      k3.questions=2 k3.max=5 k3.ops=* \
+      k3.questions=2 k3.mmax=5 k3.ops=* \
       rpolzer.questions=1 rpolzer.max=19 rpolzer.ops=+-*/
 
 Each command-line argument is of the form `.field=value` or

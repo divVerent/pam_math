@@ -177,7 +177,9 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
           continue;
         }
         // rem result always agrees in sign with dividend.
-        s = (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
+        // The dividend is not computed yet though, but only the result is!
+        s = (b < 0 ? -1 : +1);
+        s *= (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
         c = s * (rand() % b);
         a = q * b + c;
         op_str = "rem";
@@ -195,13 +197,19 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
         op_str = "div";
         break;
       case QUOT_WITH_REM:
+        // Incorrect. What is (-23) quot (-7)? 3
+        // Incorrect. Login failed.
+        // In Haskell, both quot and div are 3 here.
+        // Something is wrong here...
         c = config->mmin + rand() % (config->mmax - config->mmin + 1);
         b = config->mmin + rand() % (config->mmax - config->mmin + 1);
         if (b == 0) {
           continue;
         }
         // rem result always agrees in sign with dividend.
-        s = (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
+        // The dividend is not computed yet though, but only the result is!
+        s = (b < 0 ? -1 : +1);
+        s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
         r = s * (rand() % b);
         a = c * b + r;
         op_str = "quot";
@@ -218,8 +226,11 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     for (int j = 0; j < config->attempts; ++j) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
       char question[LINE_SIZE];
-      snprintf(question, sizeof(question), "%sWhat is %d %s %d? ", prefix, a,
-               op_str, b);
+      snprintf(question, sizeof(question), "%sWhat is %s%d%s %s %s%d%s? ",
+               prefix, //
+               a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
+               op_str,
+               b < 0 ? "(" : "", b, b < 0 ? ")" : "");
       question[sizeof(question) - 1] = 0;
 
       struct pam_message msg;
