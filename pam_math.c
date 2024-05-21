@@ -1,5 +1,3 @@
-#include "asprintf.h"             // for d0_asprintf
-#include "math_questions.h"       // for config_t, check_answer, get_config
 #include <langinfo.h>             // for nl_langinfo, CODESET
 #include <locale.h>               // for NULL, setlocale, LC_CTYPE
 #include <security/_pam_types.h>  // for PAM_SUCCESS, pam_response, pam_mes...
@@ -7,6 +5,9 @@
 #include <stdlib.h>               // for free, srand
 #include <string.h>               // for strcmp
 #include <time.h>                 // for time
+
+#include "asprintf.h"       // for d0_asprintf
+#include "math_questions.h" // for config_t, check_answer, get_config
 
 static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
