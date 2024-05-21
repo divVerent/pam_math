@@ -2,7 +2,7 @@
 #include <stdlib.h>               // for free
 
 #include "asprintf.h"       // for d0_asprintf
-#include "math_questions.h" // for config_t, check_answer, get_config
+#include "questions.h" // for config_t, check_answer, get_config
 
 static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
@@ -15,14 +15,14 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     return PAM_AUTH_ERR;
   }
 
-  for (int i = 0; i < config->questions; ++i) {
-    answer_state_t answer_state;
+  for (int i = 0; i < num_questions(config); ++i) {
+    answer_state_t *answer_state;
     char *question = make_question(config, &answer_state);
     if (question == NULL) {
       return PAM_SERVICE_ERR;
     }
 
-    for (int j = 0; j < config->attempts; ++j) {
+    for (int j = 0; j < num_attempts(config); ++j) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
       char *msg_question = d0_asprintf("%s%s", prefix, question);
 
@@ -37,10 +37,12 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
       if (retval != PAM_SUCCESS) {
         free(question);
+        free(answer_state);
         return retval;
       }
       if (resp == NULL || resp[0].resp == NULL) {
         free(question);
+        free(answer_state);
         return PAM_SERVICE_ERR;
       }
 
@@ -55,6 +57,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
     // Fallthrough when all attempts are exhausted.
     free(question);
+    free(answer_state);
 
     struct pam_message msg;
     const struct pam_message *pmsg = &msg;
@@ -71,6 +74,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
   correct_answer:
     free(question);
+    free(answer_state);
   }
 
   return PAM_SUCCESS;
@@ -101,6 +105,8 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
     return retval;
   }
 
-  config_t config = get_config(user, argc, argv);
-  return ask_questions(pamh, &config);
+  config_t *config = build_config(user, argc, argv);
+  int result = ask_questions(pamh, config);
+  free(config);
+  return result;
 }

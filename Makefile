@@ -13,8 +13,8 @@ install: pam_math.so
 clean:
 	$(RM) *.o *.so
 
-pam_math.so: pam_math.o
-	$(CC) $(LDFLAGS) -o $@ $<
+pam_math.so: pam_module.o asprintf.o math_questions.o
+	$(CC) $(LDFLAGS) -o $@ $^
 
-pam_math.o: pam_math.c asprintf.h math_questions.h
+%.o: %.c $(wildcard *.h)
 	$(CC) $(CFLAGS) -c -o $@ $<

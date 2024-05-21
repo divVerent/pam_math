@@ -1,5 +1,4 @@
-#ifndef MATH_QUESTIONS_H
-#define MATH_QUESTIONS_H
+#include "questions.h"
 
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN
@@ -14,7 +13,7 @@
 
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
-typedef struct {
+struct config_s {
   int questions; // Used by pam_math.c.
   int attempts;  // Used by pam_math.c.
   int amin;
@@ -24,7 +23,14 @@ typedef struct {
   int ops;
 
   int use_utf8; // Set from the locale.
-} config_t;
+} ;
+
+int num_questions(config_t *config) {
+return config->questions;
+}
+int num_attempts(config_t *config) {
+return config->attempts;
+}
 
 // a + b must fit for all a, b in range.
 #define AMIN_MIN (-(INT_MAX / 2))
@@ -39,15 +45,16 @@ _Static_assert(
     INT_MIN + INT_MAX <= 0,
     "positive integer range must be smaller or equal negative integer range");
 
-static config_t get_config(const char *user, int argc, const char **argv) {
-  config_t config = {.questions = 3,
-                     .attempts = 3,
-                     .amin = 0,
-                     .amax = 10,
-                     .mmin = 2,
-                     .mmax = 9,
-                     .ops = 0,
-                     .use_utf8 = -1};
+config_t *build_config(const char *user, int argc, const char **argv) {
+  config_t *config = malloc(sizeof(config_t));
+  config->questions=3;
+  config->attempts=3;
+  config->amin=0;
+  config->amax=10;
+  config->mmin=2;
+  config->mmax=9;
+  config->ops=0;
+  config->use_utf8=-1;
   size_t userlen = strlen(user);
   for (int i = 0; i < argc; ++i) {
     const char *arg = argv[i];
@@ -59,43 +66,43 @@ static config_t get_config(const char *user, int argc, const char **argv) {
     } else {
       continue;
     }
-    if (sscanf(field, "questions=%d", &config.questions) == 1) {
+    if (sscanf(field, "questions=%d", &config->questions) == 1) {
       continue;
     }
-    if (sscanf(field, "attempts=%d", &config.attempts) == 1) {
+    if (sscanf(field, "attempts=%d", &config->attempts) == 1) {
       continue;
     }
-    if (sscanf(field, "amin=%d", &config.amin) == 1) {
+    if (sscanf(field, "amin=%d", &config->amin) == 1) {
       continue;
     }
-    if (sscanf(field, "amax=%d", &config.amax) == 1) {
+    if (sscanf(field, "amax=%d", &config->amax) == 1) {
       continue;
     }
-    if (sscanf(field, "mmin=%d", &config.mmin) == 1) {
+    if (sscanf(field, "mmin=%d", &config->mmin) == 1) {
       continue;
     }
-    if (sscanf(field, "mmax=%d", &config.mmax) == 1) {
+    if (sscanf(field, "mmax=%d", &config->mmax) == 1) {
       continue;
     }
     if (!strncmp(field, "ops=", 4)) {
-      config.ops = 0;
+      config->ops = 0;
       for (const char *p = field + 4; *p; ++p) {
         if (*p == '+') {
-          config.ops |= (1 << ADD);
+          config->ops |= (1 << ADD);
         } else if (*p == '-') {
-          config.ops |= (1 << SUB);
+          config->ops |= (1 << SUB);
         } else if (*p == '*') {
-          config.ops |= (1 << MUL);
+          config->ops |= (1 << MUL);
         } else if (*p == '/') {
-          config.ops |= (1 << DIV);
+          config->ops |= (1 << DIV);
         } else if (*p == 'm') {
-          config.ops |= (1 << MOD);
+          config->ops |= (1 << MOD);
         } else if (*p == 'r') {
-          config.ops |= (1 << REM);
+          config->ops |= (1 << REM);
         } else if (*p == 'd') {
-          config.ops |= (1 << DIV_WITH_MOD);
+          config->ops |= (1 << DIV_WITH_MOD);
         } else if (*p == 'q') {
-          config.ops |= (1 << QUOT_WITH_REM);
+          config->ops |= (1 << QUOT_WITH_REM);
         } else {
           fprintf(stderr, "Unexpected %.*sops= character in config: %c\n",
                   (int)(field - arg), arg, *p);
@@ -104,15 +111,15 @@ static config_t get_config(const char *user, int argc, const char **argv) {
       continue;
     }
     if (!strcmp(field, "use_utf8=auto")) {
-      config.use_utf8 = -1;
+      config->use_utf8 = -1;
       continue;
     }
     if (!strcmp(field, "use_utf8=yes")) {
-      config.use_utf8 = 1;
+      config->use_utf8 = 1;
       continue;
     }
     if (!strcmp(field, "use_utf8=no")) {
-      config.use_utf8 = 0;
+      config->use_utf8 = 0;
       continue;
     }
     fprintf(stderr, "Unexpected option in config: %s\n", arg);
@@ -121,99 +128,99 @@ static config_t get_config(const char *user, int argc, const char **argv) {
   int fixed = 0;
 
   // Fix reverse ranges.
-  if (config.amax < config.amin) {
+  if (config->amax < config->amin) {
     fprintf(stderr, "Reverse additive range: %d to %d - swapping.\n",
-            config.amin, config.amax);
-    int h = config.amax;
-    config.amax = config.amin;
-    config.amin = h;
+            config->amin, config->amax);
+    int h = config->amax;
+    config->amax = config->amin;
+    config->amin = h;
     fixed = 1;
   }
-  if (config.mmax < config.mmin) {
+  if (config->mmax < config->mmin) {
     fprintf(stderr, "Reverse multiplicative range: %d to %d - swapping.\n",
-            config.mmin, config.mmax);
-    int h = config.mmax;
-    config.mmax = config.mmin;
-    config.mmin = h;
+            config->mmin, config->mmax);
+    int h = config->mmax;
+    config->mmax = config->mmin;
+    config->mmin = h;
     fixed = 1;
   }
 
   // Avoid integer overflow.
-  if (config.amin < AMIN_MIN) {
+  if (config->amin < AMIN_MIN) {
     fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
-            config.amin, config.amax);
-    config.amin = AMIN_MIN;
+            config->amin, config->amax);
+    config->amin = AMIN_MIN;
     fixed = 1;
   }
-  if (config.amax < AMIN_MIN) {
+  if (config->amax < AMIN_MIN) {
     fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
-            config.amax, config.amax);
-    config.amax = AMIN_MIN;
+            config->amax, config->amax);
+    config->amax = AMIN_MIN;
     fixed = 1;
   }
-  if (config.amin > AMAX_MAX) {
+  if (config->amin > AMAX_MAX) {
     fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
-            config.amin, config.amin);
-    config.amin = AMAX_MAX;
+            config->amin, config->amin);
+    config->amin = AMAX_MAX;
     fixed = 1;
   }
-  if (config.amax > AMAX_MAX) {
+  if (config->amax > AMAX_MAX) {
     fprintf(stderr, "Overly large additive range: %d to %d - shrinking.\n",
-            config.amin, config.amax);
-    config.amax = AMAX_MAX;
+            config->amin, config->amax);
+    config->amax = AMAX_MAX;
     fixed = 1;
   }
-  if (config.mmin < MMIN_MIN) {
+  if (config->mmin < MMIN_MIN) {
     fprintf(stderr,
             "Overly large multiplicative range: %d to %d - shrinking.\n",
-            config.mmin, config.mmax);
-    config.mmin = MMIN_MIN;
+            config->mmin, config->mmax);
+    config->mmin = MMIN_MIN;
     fixed = 1;
   }
-  if (config.mmax < MMIN_MIN) {
+  if (config->mmax < MMIN_MIN) {
     fprintf(stderr,
             "Overly large multiplicative range: %d to %d - shrinking.\n",
-            config.mmax, config.mmax);
-    config.mmax = MMIN_MIN;
+            config->mmax, config->mmax);
+    config->mmax = MMIN_MIN;
     fixed = 1;
   }
-  if (config.mmin > MMAX_MAX) {
+  if (config->mmin > MMAX_MAX) {
     fprintf(stderr,
             "Overly large multiplicative range: %d to %d - shrinking.\n",
-            config.mmin, config.mmin);
-    config.mmin = MMAX_MAX;
+            config->mmin, config->mmin);
+    config->mmin = MMAX_MAX;
     fixed = 1;
   }
-  if (config.mmax > MMAX_MAX) {
+  if (config->mmax > MMAX_MAX) {
     fprintf(stderr,
             "Overly large multiplicative range: %d to %d - shrinking.\n",
-            config.mmin, config.mmax);
-    config.mmax = MMAX_MAX;
+            config->mmin, config->mmax);
+    config->mmax = MMAX_MAX;
     fixed = 1;
   }
 
   // There must be at least two options for each range.
-  if (config.amax < config.amin + 2) {
+  if (config->amax < config->amin + 2) {
     fprintf(stderr, "Invalid additive range: %d to %d - expanding.\n",
-            config.amin, config.amax);
+            config->amin, config->amax);
     // To avoid integer overflow, we pick one of the two possible ways to fix it
     // - namely whichever grows towards zero.
-    if (config.amin < 0) {
-      config.amax = config.amin + 2;
+    if (config->amin < 0) {
+      config->amax = config->amin + 2;
     } else {
-      config.amin = config.amax - 2;
+      config->amin = config->amax - 2;
     }
     fixed = 1;
   }
-  if (config.mmax < config.mmin + 2) {
+  if (config->mmax < config->mmin + 2) {
     fprintf(stderr, "Invalid multiplicative range: %d to %d - expanding.\n",
-            config.mmin, config.mmax);
+            config->mmin, config->mmax);
     // To avoid integer overflow, we pick one of the two possible ways to fix it
     // - namely whichever grows towards zero.
-    if (config.mmin < 0) {
-      config.mmax = config.mmin + 2;
+    if (config->mmin < 0) {
+      config->mmax = config->mmin + 2;
     } else {
-      config.mmin = config.mmax - 2;
+      config->mmin = config->mmax - 2;
     }
     fixed = 1;
   }
@@ -222,11 +229,11 @@ static config_t get_config(const char *user, int argc, const char **argv) {
     fprintf(stderr,
             "Fixed additive range: %d to %d\n"
             "Fixed multiplicative range: %d to %d\n",
-            config.amin, config.amax, config.mmin, config.mmax);
+            config->amin, config->amax, config->mmin, config->mmax);
   }
 
-  if (config.ops == 0) {
-    config.questions = 0;
+  if (config->ops == 0) {
+    config->questions = 0;
   }
 
   // RNG has to be initialized _somewhere_.
@@ -235,19 +242,21 @@ static config_t get_config(const char *user, int argc, const char **argv) {
   // global state and can interfere with other threads.
   srand(time(NULL));
 
-  if (config.use_utf8 < 0) {
+  if (config->use_utf8 < 0) {
     // NOTE: This also is somewhat evil, as it can interfere with other threads.
     char *prev_ctype = setlocale(LC_CTYPE, "");
-    config.use_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
+    config->use_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
     setlocale(LC_CTYPE, prev_ctype);
   }
 
   return config;
 }
 
-typedef int answer_state_t;
+struct answer_state_s {
+	int answer;
+} ;
 
-static char *make_question(config_t *config, answer_state_t *answer_state) {
+char *make_question(config_t *config, answer_state_t **answer_state) {
   int op;
 
   do {
@@ -372,7 +381,8 @@ static char *make_question(config_t *config, answer_state_t *answer_state) {
     }
   } while (op_str == NULL);
 
-  *answer_state = c;
+  *answer_state = malloc(sizeof(answer_state_t));
+  (*answer_state)->answer = c;
   return d0_asprintf("What is %s%s%d%s %s %s%d%s%s? ",
                      op_prefix,                             //
                      a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
@@ -381,13 +391,11 @@ static char *make_question(config_t *config, answer_state_t *answer_state) {
                      op_suffix);
 }
 
-static int check_answer(answer_state_t answer_state, const char *given) {
+int check_answer(answer_state_t *answer_state, const char *given) {
   int given_int;
   char too_much;
   if (sscanf(given, "%d%c", &given_int, &too_much) != 1) {
     return 0; // Invalid format.
   }
-  return given_int == answer_state;
+  return given_int == answer_state->answer;
 }
-
-#endif
