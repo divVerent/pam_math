@@ -23,13 +23,13 @@ conversations.
 This includes:
 
 -   Login managers:
-    -   login
     -   LightDM
+    -   login
 -   Screen lockers:
     -   physlock\*
-    -   XSecureLock
-    -   vlock
+    -   vlock\*
     -   XScreenSaver
+    -   XSecureLock
 -   Other:
     -   doas
     -   OpenSSH (via `KbdInteractiveAuthentication`)
