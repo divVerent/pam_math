@@ -234,6 +234,152 @@ static config_t get_config(const char *user, int argc, const char **argv) {
   return config;
 }
 
+typedef int answer_state_t;
+
+static char *make_question(config_t *config, int have_utf8,
+                           answer_state_t *answer_state) {
+  int op;
+
+  do {
+    op = rand() % NUM_OPS;
+  } while ((config->ops & (1 << op)) == 0);
+
+  int a, b, c;
+  const char *op_prefix = "";
+  const char *op_str = NULL;
+  const char *op_suffix = "";
+  do {
+    int q, r, s;
+    switch (op) {
+    case ADD:
+      a = config->amin + rand() % (config->amax - config->amin + 1);
+      b = config->amin + rand() % (config->amax - config->amin + 1);
+      c = a + b;
+      op_str = "+";
+      break;
+    case SUB:
+      c = config->amin + rand() % (config->amax - config->amin + 1);
+      b = config->amin + rand() % (config->amax - config->amin + 1);
+      a = c + b;
+      op_str = "-";
+      break;
+    case MUL:
+      a = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      c = a * b;
+      if (have_utf8) {
+        op_str = "×";
+      } else {
+        op_str = "*";
+      }
+      break;
+    case DIV:
+      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        continue;
+      }
+      a = c * b;
+      if (have_utf8) {
+        op_str = "÷";
+      } else {
+        op_str = "/";
+      }
+      break;
+    case MOD:
+      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        continue;
+      }
+      s = (b < 0 ? -1 : +1);
+      // mod result always agrees in sign with divisor.
+      c = s * (rand() % b);
+      a = q * b + c;
+      op_str = "mod";
+      break;
+    case REM:
+      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        continue;
+      }
+      // rem result always agrees in sign with dividend.
+      // The dividend is not computed yet though, but only the result is!
+      s = (b < 0 ? -1 : +1);
+      s *= (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
+      c = s * (rand() % b);
+      a = q * b + c;
+      op_str = "rem";
+      break;
+    case DIV_WITH_MOD:
+      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        continue;
+      }
+      s = (b < 0 ? -1 : +1);
+      // mod result always agrees in sign with divisor.
+      r = s * (rand() % b);
+      a = c * b + r;
+      if (have_utf8) {
+        op_prefix = "⌊";
+        op_str = "÷";
+        op_suffix = "⌋";
+      } else {
+        op_prefix = "floor(";
+        op_str = "/";
+        op_suffix = ")";
+      }
+      break;
+    case QUOT_WITH_REM:
+      // Incorrect. What is (-23) quot (-7)? 3
+      // Incorrect. Login failed.
+      // In Haskell, both quot and div are 3 here.
+      // Something is wrong here...
+      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      if (b == 0) {
+        continue;
+      }
+      // rem result always agrees in sign with dividend.
+      // The dividend is not computed yet though, but only the result is!
+      s = (b < 0 ? -1 : +1);
+      s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
+      r = s * (rand() % b);
+      a = c * b + r;
+      op_prefix = "[";
+      if (have_utf8) {
+        op_str = "÷";
+      } else {
+        op_str = "/";
+      }
+      op_suffix = "]";
+      break;
+    default:
+      fprintf(stderr, "Unreachable code: unsupported operation: %d\n", op);
+      return NULL;
+    }
+  } while (op_str == NULL);
+
+  *answer_state = c;
+  return d0_asprintf("What is %s%s%d%s %s %s%d%s%s? ",
+                     op_prefix,                             //
+                     a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
+                     op_str,                                //
+                     b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
+                     op_suffix);
+}
+
+static int check_answer(answer_state_t answer_state, const char *given) {
+  int given_int;
+  char too_much;
+  if (sscanf(given, "%d%c", &given_int, &too_much) != 1) {
+    return 0; // Invalid format.
+  }
+  return given_int == answer_state;
+}
+
 static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
   int retval = pam_get_item(pamh, PAM_CONV, &convp);
@@ -259,148 +405,23 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
   setlocale(LC_CTYPE, prev_ctype);
 
   for (int i = 0; i < config->questions; ++i) {
-    int op;
-
-    do {
-      op = rand() % NUM_OPS;
-    } while ((config->ops & (1 << op)) == 0);
-
-    int a, b, c;
-    const char *op_prefix = "";
-    const char *op_str = NULL;
-    const char *op_suffix = "";
-    do {
-      int q, r, s;
-      switch (op) {
-      case ADD:
-        a = config->amin + rand() % (config->amax - config->amin + 1);
-        b = config->amin + rand() % (config->amax - config->amin + 1);
-        c = a + b;
-        op_str = "+";
-        break;
-      case SUB:
-        c = config->amin + rand() % (config->amax - config->amin + 1);
-        b = config->amin + rand() % (config->amax - config->amin + 1);
-        a = c + b;
-        op_str = "-";
-        break;
-      case MUL:
-        a = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        c = a * b;
-        if (have_utf8) {
-          op_str = "×";
-        } else {
-          op_str = "*";
-        }
-        break;
-      case DIV:
-        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        if (b == 0) {
-          continue;
-        }
-        a = c * b;
-        if (have_utf8) {
-          op_str = "÷";
-        } else {
-          op_str = "/";
-        }
-        break;
-      case MOD:
-        q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        if (b == 0) {
-          continue;
-        }
-        s = (b < 0 ? -1 : +1);
-        // mod result always agrees in sign with divisor.
-        c = s * (rand() % b);
-        a = q * b + c;
-        op_str = "mod";
-        break;
-      case REM:
-        q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        if (b == 0) {
-          continue;
-        }
-        // rem result always agrees in sign with dividend.
-        // The dividend is not computed yet though, but only the result is!
-        s = (b < 0 ? -1 : +1);
-        s *= (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
-        c = s * (rand() % b);
-        a = q * b + c;
-        op_str = "rem";
-        break;
-      case DIV_WITH_MOD:
-        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        if (b == 0) {
-          continue;
-        }
-        s = (b < 0 ? -1 : +1);
-        // mod result always agrees in sign with divisor.
-        r = s * (rand() % b);
-        a = c * b + r;
-        if (have_utf8) {
-          op_prefix = "⌊";
-          op_str = "÷";
-          op_suffix = "⌋";
-        } else {
-          op_prefix = "floor(";
-          op_str = "/";
-          op_suffix = ")";
-        }
-        break;
-      case QUOT_WITH_REM:
-        // Incorrect. What is (-23) quot (-7)? 3
-        // Incorrect. Login failed.
-        // In Haskell, both quot and div are 3 here.
-        // Something is wrong here...
-        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-        if (b == 0) {
-          continue;
-        }
-        // rem result always agrees in sign with dividend.
-        // The dividend is not computed yet though, but only the result is!
-        s = (b < 0 ? -1 : +1);
-        s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
-        r = s * (rand() % b);
-        a = c * b + r;
-        op_prefix = "[";
-        if (have_utf8) {
-          op_str = "÷";
-        } else {
-          op_str = "/";
-        }
-        op_suffix = "]";
-        break;
-      default:
-        return PAM_SERVICE_ERR;
-      }
-    } while (op_str == NULL);
-
-    char *correct = d0_asprintf("%d", c);
+    answer_state_t answer_state;
+    char *question = make_question(config, have_utf8, &answer_state);
+    if (question == NULL) {
+      return PAM_SERVICE_ERR;
+    }
 
     for (int j = 0; j < config->attempts; ++j) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
-      char *question = d0_asprintf("%sWhat is %s%s%d%s %s %s%d%s%s? ",
-                                     prefix,                                //
-                                     op_prefix,                             //
-                                     a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
-                                     op_str,                                //
-                                     b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
-                                     op_suffix);
+      char *msg_question = d0_asprintf("%s%s", prefix, question);
 
       struct pam_message msg;
       const struct pam_message *pmsg = &msg;
       struct pam_response *resp = NULL;
       msg.msg_style = PAM_PROMPT_ECHO_ON;
-      msg.msg = question;
+      msg.msg = msg_question;
       retval = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
-      free(question);
+      free(msg_question);
       if (retval != PAM_SUCCESS) {
         return retval;
       }
@@ -408,7 +429,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
         return PAM_SERVICE_ERR;
       }
 
-      int ok = !strcmp(resp[0].resp, correct);
+      int ok = check_answer(answer_state, resp[0].resp);
 
       free(resp[0].resp);
       free(resp);
@@ -418,7 +439,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     }
 
     // Fallthrough when all attempts are exhausted.
-    free(correct);
+    free(question);
     struct pam_message msg;
     const struct pam_message *pmsg = &msg;
     struct pam_response *resp = NULL;
@@ -433,7 +454,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     return PAM_AUTH_ERR;
 
   correct_answer:
-    free(correct);
+    free(question);
   }
 
   return PAM_SUCCESS;
