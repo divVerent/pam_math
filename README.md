@@ -31,6 +31,16 @@ This module is configured entirely in `/etc/pam.d/common-auth` as
 follows (a good bet would be putting this at the end of the file):
 
     auth required pam_math.so \
+      .attempts=3 .amin=1 .amax=99 .mmin=2 .mmax=9 \
+      k1.questions=3 k1.ops=+-*/
+
+With this, the user `k1` (and nobody else) will be asked 3 random math
+problems using one of the four basic math operations, with a range from
+1 to 99 for addition and 2 to 9 for multiplication inputs.
+
+A more complex example showcasing all features:
+
+    auth required pam_math.so \
       .attempts=3 .amin=2 .amax=9 .mmin=2 .mmax=9 \
       k1.questions=3 k1.ops=+-*/ \
       k1g.questions=5 k1g.mmax=15 k1g.ops=*/ \
