@@ -1,9 +1,12 @@
-#include <limits.h>    // for INT_MAX, INT_MIN
-#include <math.h>      // for sqrt
-#include <stdio.h>     // for fprintf, sscanf, stderr, NULL, size_t
-#include <stdlib.h>    // for rand
-#include <string.h>    // for strncmp, strlen
-#include "asprintf.h"  // for d0_asprintf
+#ifndef MATH_QUESTIONS_H
+#define MATH_QUESTIONS_H
+
+#include "asprintf.h" // for d0_asprintf
+#include <limits.h>   // for INT_MAX, INT_MIN
+#include <math.h>     // for sqrt
+#include <stdio.h>    // for fprintf, sscanf, stderr, NULL, size_t
+#include <stdlib.h>   // for rand
+#include <string.h>   // for strncmp, strlen
 
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
@@ -352,3 +355,4 @@ static int check_answer(answer_state_t answer_state, const char *given) {
   return given_int == answer_state;
 }
 
+#endif

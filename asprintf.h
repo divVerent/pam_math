@@ -1,7 +1,10 @@
-#include <limits.h>  // for INT_MAX
-#include <stdarg.h>  // for va_end, va_start, va_list
-#include <stdio.h>   // for fprintf, vsnprintf, stderr
-#include <stdlib.h>  // for abort, malloc
+#ifndef ASPRINTF_H
+#define ASPRINTF_H
+
+#include <limits.h> // for INT_MAX
+#include <stdarg.h> // for va_end, va_start, va_list
+#include <stdio.h>  // for fprintf, vsnprintf, stderr
+#include <stdlib.h> // for abort, malloc
 
 static char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
@@ -26,3 +29,4 @@ static char *d0_asprintf(const char *restrict fmt, ...) {
   return buf;
 }
 
+#endif
