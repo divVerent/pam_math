@@ -29,39 +29,53 @@ modules. For example, on Debian on x86-64, this would be:
 
 ## Configuring
 
-This module is configured entirely in `/etc/pam.d/common-auth` as
-follows (a good bet would be putting this at the end of the file):
+1.  Pick a PAM service to add this to.
 
-    auth required pam_math.so \
-      .attempts=3 .amin=1 .amax=99 .mmin=2 .mmax=9 \
-      k1.questions=3 k1.ops=+-*/
+    You can see all PAM services by `ls /etc/pam.d`.
 
-With this, the user `k1` (and nobody else) will be asked 3 random math
-problems using one of the four basic math operations, with a range from
-1 to 99 for addition and 2 to 9 for multiplication inputs.
+    Typical choices will be `lightdm` or another display manager, or
+    `common-auth` to apply to all types of login on your system (NOTE:
+    this is dangerous as it may make it impossible to log in if a
+    mistake happens in the configuration file).
 
-A more complex example showcasing all features:
+2.  Open its config file in an editor.
 
-    auth required pam_math.so \
-      .attempts=3 .amin=2 .amax=9 .mmin=2 .mmax=9 \
-      k1.questions=3 k1.ops=+-*/ \
-      k1g.questions=5 k1g.mmax=15 k1g.ops=*/ \
-      k2s.questions=3 k2s.ops=+-* \
-      k2.questions=5 k2.ops=* \
-      k3s.questions=1 k3s.ops=+- \
-      k3.questions=2 k3.mmax=5 k3.ops=* \
-      rpolzer.questions=1 rpolzer.mmax=19 rpolzer.ops=+-*/dqmr
+    This would be `/etc/pam.d/<servicename>`.
 
-NOTE: This is **dangerous**! A mistake in this file can cause login to
-no longer work and may require recovery media to undo. It is thus
-recommended to keep a terminal with the editor on this file open, and to
-try out login on another terminal until it works (you can use
-`pamtester common-auth $USER authenticate` to test that). You have been
-warned!
+3.  Locate a place that occurs after password authentication.
 
-Each command-line argument is of the form `.field=value` or
-`user.field=value`, whereas the former sets a default and the latter
-overrides it for that specific user.
+    You need to locate the last line that starts with `auth` or
+    `@include`s a file that has lines that start with `auth`. Typically
+    this will be either at the end of the file, or a line like
+    `@include common-auth`.
+
+4.  Configure this module.
+
+    After all existing password authentication, add a section like:
+
+        auth required pam_math.so \
+          .attempts=3 .amin=1 .amax=99 .mmin=2 .mmax=9 \
+          k1.questions=3 k1.ops=+-*/
+
+    It is important that all but the last line end with a backslash
+    (`\`) so that PAM considers this all a single line.
+
+    With this, the user `k1` (and nobody else) will be asked 3 random
+    math problems using one of the four basic math operations, with a
+    range from 1 to 99 for addition and 2 to 9 for multiplication
+    inputs.
+
+    <!--
+    TODO:
+    More complex examples can be found in the [`examples`](examples/)
+    directory.
+    -->
+
+## Reference
+
+Each argument is of the form `.field=value` or `user.field=value`,
+whereas the former sets a default and the latter overrides it for that
+specific user.
 
 The following fields can be set:
 
