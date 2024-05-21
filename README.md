@@ -12,6 +12,51 @@ authentication (e.g. via password) has to stay enabled when using this.
 This module serves only as a way to have *additional* questions posed to
 users.
 
+## Prerequisites
+
+Your system needs to be running Linux, FreeBSD, NetBSD, OpenBSD or
+another operating system that uses PAM.
+
+The login you want to modify must support multi-prompt PAM
+conversations.
+
+This includes:
+
+-   Login managers:
+    -   login
+    -   LightDM
+-   Screen lockers:
+    -   physlock\*
+    -   XSecureLock
+    -   vlock
+    -   XScreenSaver
+-   Other:
+    -   doas
+    -   OpenSSH (via `KbdInteractiveAuthentication`)
+    -   su
+    -   sudo
+
+\*: Applications where the results cannot be seen while typing them in,
+but where the module otherwise works correctly.
+
+This module is notably not compatible with:
+
+-   Login managers:
+-   Screen lockers:
+    -   i3lock
+    -   screen
+    -   Swaylock
+
+<!--
+To be tested:
+
+-   Entrance
+-   GDM
+-   LXDM
+-   SDDM
+-   XDM
+-->
+
 ## Compiling
 
 This module is compiled as follows:
@@ -36,7 +81,9 @@ modules. For example, on Debian on x86-64, this would be:
     Typical choices will be `lightdm` or another display manager, or
     `common-auth` to apply to all types of login on your system (NOTE:
     this is dangerous as it may make it impossible to log in if a
-    mistake happens in the configuration file).
+    mistake happens in the configuration file, and may break some ways
+    of logging in entirely if they do not support multi-step PAM
+    conversations).
 
 2.  Open its config file in an editor.
 
