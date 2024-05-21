@@ -1,6 +1,14 @@
-\#pam_math
+# pam_math
 
 A simple PAM module that asks math questions at login time.
+
+## WARNING
+
+This is not a security utility. Solving basic math problems is not
+sufficient authentication for a computer system, and as such, regular
+authentication (e.g. via password) has to stay enabled when using this.
+This module serves only as a way to have *additional* questions posed to
+users.
 
 ## Compiling
 
