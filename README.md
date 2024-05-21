@@ -38,7 +38,7 @@ follows (a good bet would be putting this at the end of the file):
       k2.questions=5 k2.ops=* \
       k3s.questions=1 k3s.ops=+- \
       k3.questions=2 k3.mmax=5 k3.ops=* \
-      rpolzer.questions=1 rpolzer.max=19 rpolzer.ops=+-*/
+      rpolzer.questions=1 rpolzer.mmax=19 rpolzer.ops=+-*/dqmr
 
 NOTE: This is **dangerous**! A mistake in this file can cause login to
 no longer work and may require recovery media to undo. It is thus
