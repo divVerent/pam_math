@@ -60,6 +60,9 @@ This module is compiled as follows:
 
     make
 
+If this fails, you will most likely just need to install a package with
+a name like `libpam-dev`, `pam-dev`, `libpam-devel` or `pam-devel`.
+
 ## Installing
 
 This module needs to be installed where your distribution expects PAM
