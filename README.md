@@ -65,16 +65,16 @@ The following fields can be set:
 
 The following `ops` are available:
 
-| Character | Operation               | Formula               | Limits               | Notes                                         |
-|-----------|-------------------------|-----------------------|----------------------|-----------------------------------------------|
-| `+`       | Addition                | `x = a + b`           | `amin ≤ a, b ≤ amax` |                                               |
-| `-`       | Subtraction             | `x = a - b`           | `amin ≤ b, x ≤ amax` |                                               |
-| `*`       | Multiplication          | `x = a \* b`          | `mmin ≤ a, b ≤ mmax` |                                               |
-| `/`       | Remainder-less division | `x = a / b`           | `mmin ≤ b, x ≤ mmax` |                                               |
-| `d`       | Division w/ remainder   | `x = ⌊a / b⌋`         | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `b` (Python style) |
-| `q`       | Division w/ remainder   | `x = [a / b]`         | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `a` (C style)      |
-| `m`       | Division remainder      | `x = a - b * ⌊a / b⌋` | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `b` (Python style) |
-| `r`       | Division remainder      | `x = a - b * [a / b]` | `mmin ≤ b, x ≤ mmax` | Remainder has same sign as `a` (C style)      |
+| Character | Operation               | Formula               | Limits                     | Notes                                         |
+|-----------|-------------------------|-----------------------|----------------------------|-----------------------------------------------|
+| `+`       | Addition                | `x = a + b`           | `amin ≤ a, b ≤ amax`       |                                               |
+| `-`       | Subtraction             | `x = a - b`           | `amin ≤ b, x ≤ amax`       |                                               |
+| `*`       | Multiplication          | `x = a \* b`          | `mmin ≤ a, b ≤ mmax`       |                                               |
+| `/`       | Remainder-less division | `x = a / b`           | `mmin ≤ b, x ≤ mmax`       |                                               |
+| `d`       | Division w/ remainder   | `x = ⌊a / b⌋`         | `mmin ≤ b, x ≤ mmax`       | Remainder has same sign as `b` (Python style) |
+| `q`       | Division w/ remainder   | `x = [a / b]`         | `mmin ≤ b, x ≤ mmax`       | Remainder has same sign as `a` (C style)      |
+| `m`       | Division remainder      | `x = a - b * ⌊a / b⌋` | `mmin ≤ b, ⌊a / b⌋ ≤ mmax` | Remainder has same sign as `b` (Python style) |
+| `r`       | Division remainder      | `x = a - b * [a / b]` | `mmin ≤ b, [a / b] ≤ mmax` | Remainder has same sign as `a` (C style)      |
 
 Note that the `min` and `max` pairs of options apply directly for
 addition and multiplication problems, while for subtraction or divison
