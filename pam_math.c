@@ -1,3 +1,5 @@
+#include <langinfo.h>
+#include <locale.h>
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
 #include <stdio.h>
@@ -117,6 +119,10 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
 
   srand(time(NULL));
 
+  char *prev_ctype = setlocale(LC_CTYPE, "");
+  int have_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
+  setlocale(LC_CTYPE, prev_ctype);
+
   for (int i = 0; i < config->questions; ++i) {
     int op;
 
@@ -125,7 +131,9 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     } while ((config->ops & (1 << op)) == 0);
 
     int a, b, c;
+    const char *op_prefix = "";
     const char *op_str = NULL;
+    const char *op_suffix = "";
     do {
       int q, r, s;
       switch (op) {
@@ -145,8 +153,11 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
         a = config->mmin + rand() % (config->mmax - config->mmin + 1);
         b = config->mmin + rand() % (config->mmax - config->mmin + 1);
         c = a * b;
-        // TODO: use LC_CYTPE to pick appropriate symbol.
-        op_str = "×";
+        if (have_utf8) {
+          op_str = "×";
+        } else {
+          op_str = "*";
+        }
         break;
       case DIV:
         c = config->mmin + rand() % (config->mmax - config->mmin + 1);
@@ -155,8 +166,11 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
           continue;
         }
         a = c * b;
-        // TODO: use LC_CYTPE to pick appropriate symbol.
-        op_str = "÷";
+        if (have_utf8) {
+          op_str = "÷";
+        } else {
+          op_str = "/";
+        }
         break;
       case MOD:
         q = config->mmin + rand() % (config->mmax - config->mmin + 1);
@@ -194,7 +208,15 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
         // mod result always agrees in sign with divisor.
         r = s * (rand() % b);
         a = c * b + r;
-        op_str = "div";
+        if (have_utf8) {
+          op_prefix = "⌊";
+          op_str = "÷";
+          op_suffix = "⌋";
+        } else {
+          op_prefix = "floor(";
+          op_str = "/";
+          op_suffix = ")";
+        }
         break;
       case QUOT_WITH_REM:
         // Incorrect. What is (-23) quot (-7)? 3
@@ -212,7 +234,13 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
         s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
         r = s * (rand() % b);
         a = c * b + r;
-        op_str = "quot";
+        op_prefix = "[";
+        if (have_utf8) {
+          op_str = "÷";
+        } else {
+          op_str = "/";
+        }
+        op_suffix = "]";
         break;
       default:
         return PAM_SERVICE_ERR;
@@ -226,11 +254,12 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
     for (int j = 0; j < config->attempts; ++j) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
       char question[LINE_SIZE];
-      snprintf(question, sizeof(question), "%sWhat is %s%d%s %s %s%d%s? ",
-               prefix, //
+      snprintf(question, sizeof(question), "%sWhat is %s%s%d%s %s %s%d%s%s? ",
+               prefix,                                //
+               op_prefix, //
                a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
-               op_str,
-               b < 0 ? "(" : "", b, b < 0 ? ")" : "");
+               op_str, b < 0 ? "(" : "", b, b < 0 ? ")" : "",
+               op_suffix);
       question[sizeof(question) - 1] = 0;
 
       struct pam_message msg;
