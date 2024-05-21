@@ -249,8 +249,11 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     return PAM_SUCCESS;
   }
 
+  // NOTE: Technically it's evil to do this in a PAM module as it changes
+  // global state and can interfere with other threads.
   srand(time(NULL));
 
+  // NOTE: This also is somewhat evil, as it can interfere with other threads.
   char *prev_ctype = setlocale(LC_CTYPE, "");
   int have_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
   setlocale(LC_CTYPE, prev_ctype);
