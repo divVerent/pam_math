@@ -56,10 +56,10 @@ implement the full PAM conversation, such as:
 
 ## Compiling
 
-You need a C compiler installed (either `gcc` or `clang` will do), as
-well as the PAM headers (they will be in a package named `libpam-dev`,
-`pam-dev`, `libpam-devel` or `pam-devel`), and then can compile it as
-follows:
+You need `make` and a C compiler installed (either `gcc` or `clang` will
+do), as well as the PAM headers (they will be in a package named
+`libpam-dev`, `pam-dev`, `libpam-devel` or `pam-devel`), and then can
+compile it as follows:
 
     make
 
