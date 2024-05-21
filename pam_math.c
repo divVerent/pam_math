@@ -21,8 +21,13 @@ typedef struct {
 } config_t;
 
 config_t get_config(const char *user, int argc, const char **argv) {
-  config_t config = {
-      .questions = 3, .attempts = 3, .amin = 0, .amax = 10, .mmin = 2, .mmax = 9, .ops = 0};
+  config_t config = {.questions = 3,
+                     .attempts = 3,
+                     .amin = 0,
+                     .amax = 10,
+                     .mmin = 2,
+                     .mmax = 9,
+                     .ops = 0};
   size_t userlen = strlen(user);
   for (int i = 0; i < argc; ++i) {
     const char *arg = argv[i];
@@ -80,6 +85,18 @@ config_t get_config(const char *user, int argc, const char **argv) {
     }
     fprintf(stderr, "Unexpected option in config: %s\n", arg);
   }
+
+  // There must be at least two options for each range.
+  if (config.amax - config.amin < 2) {
+    fprintf(stderr, "Invalid additive range: %d to %d - expanding.\n",
+            config.amin, config.amax);
+    config.amax = config.amin + 2;
+  }
+  if (config.mmax - config.mmin < 2) {
+    fprintf(stderr, "Invalid multiplicative range: %d to %d - expanding.\n",
+            config.mmin, config.mmax);
+    config.mmax = config.mmin + 2;
+  }
   return config;
 }
 
@@ -107,98 +124,92 @@ int ask_questions(pam_handle_t *pamh, config_t *config) {
       op = rand() % NUM_OPS;
     } while ((config->ops & (1 << op)) == 0);
 
-    const char *op_str;
-    int a, b, c, q, r, s;
-    switch (op) {
-    case ADD:
-      a = config->amin + rand() % (config->amax - config->amin + 1);
-      b = config->amin + rand() % (config->amax - config->amin + 1);
-      c = a + b;
-      op_str = "+";
-      break;
-    case SUB:
-      c = config->amin + rand() % (config->amax - config->amin + 1);
-      b = config->amin + rand() % (config->amax - config->amin + 1);
-      a = c + b;
-      op_str = "-";
-      break;
-    case MUL:
-      a = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      c = a * b;
-      // TODO: use LC_CYTPE to pick appropriate symbol.
-      op_str = "×";
-      break;
-    case DIV:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        // TODO: instead retry.
-        b = 1;
+    int a, b, c;
+    const char *op_str = NULL;
+    do {
+      int q, r, s;
+      switch (op) {
+      case ADD:
+        a = config->amin + rand() % (config->amax - config->amin + 1);
+        b = config->amin + rand() % (config->amax - config->amin + 1);
+        c = a + b;
+        op_str = "+";
+        break;
+      case SUB:
+        c = config->amin + rand() % (config->amax - config->amin + 1);
+        b = config->amin + rand() % (config->amax - config->amin + 1);
+        a = c + b;
+        op_str = "-";
+        break;
+      case MUL:
+        a = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        c = a * b;
+        // TODO: use LC_CYTPE to pick appropriate symbol.
+        op_str = "×";
+        break;
+      case DIV:
+        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        a = c * b;
+        // TODO: use LC_CYTPE to pick appropriate symbol.
+        op_str = "÷";
+        break;
+      case MOD:
+        q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        s = (b < 0 ? -1 : +1);
+        // mod result always agrees in sign with divisor.
+        c = s * (rand() % b);
+        a = q * b + c;
+        op_str = "mod";
+        break;
+      case REM:
+        q = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        // rem result always agrees in sign with dividend.
+        s = (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
+        c = s * (rand() % b);
+        a = q * b + c;
+        op_str = "rem";
+        break;
+      case DIV_WITH_MOD:
+        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        s = (b < 0 ? -1 : +1);
+        // mod result always agrees in sign with divisor.
+        r = s * (rand() % b);
+        a = c * b + r;
+        op_str = "div";
+        break;
+      case QUOT_WITH_REM:
+        c = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+        if (b == 0) {
+          continue;
+        }
+        // rem result always agrees in sign with dividend.
+        s = (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
+        r = s * (rand() % b);
+        a = c * b + r;
+        op_str = "quot";
+        break;
+      default:
+        return PAM_SERVICE_ERR;
       }
-      a = c * b;
-      // TODO: use LC_CYTPE to pick appropriate symbol.
-      op_str = "÷";
-      break;
-    case MOD:
-      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        // TODO: instead retry.
-        b = 1;
-      }
-      s = (b < 0 ? -1 : +1);
-      // mod result always agrees in sign with divisor.
-      c = s * (rand() % b);
-      a = q * b + c;
-      op_str = "mod";
-      break;
-    case REM:
-      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        // TODO: instead retry.
-        b = 1;
-      }
-      // rem result always agrees in sign with dividend.
-      s = (q < 0 ? -1 :
-           q > 0 ? +1 :
-           (rand() % 2) * 2 - 1);
-      c = s * (rand() % b);
-      a = q * b + c;
-      op_str = "rem";
-      break;
-    case DIV_WITH_MOD:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        // TODO: instead retry.
-        b = 1;
-      }
-      s = (b < 0 ? -1 : +1);
-      // mod result always agrees in sign with divisor.
-      r = s * (rand() % b);
-      a = c * b + r;
-      op_str = "div";
-      break;
-    case QUOT_WITH_REM:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      if (b == 0) {
-        // TODO: instead retry.
-        b = 1;
-      }
-      // rem result always agrees in sign with dividend.
-      s = (c < 0 ? -1 :
-           c > 0 ? +1 :
-           (rand() % 2) * 2 - 1);
-      r = s * (rand() % b);
-      a = c * b + r;
-      op_str = "quot";
-      break;
-    default:
-      return PAM_SERVICE_ERR;
-    }
+    } while (op_str == NULL);
 
     char correct[LINE_SIZE];
     snprintf(correct, sizeof(correct), "%d", c);
