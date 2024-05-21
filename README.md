@@ -2,6 +2,8 @@
 
 A simple PAM module that asks math questions at login time.
 
+TODO: show a screen capture.
+
 ## WARNING
 
 This is not a security utility. Solving basic math problems is not
