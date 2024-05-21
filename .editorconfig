@@ -1,0 +1,2 @@
+[**.md]
+div0_formatter = sh -c 'pandoc -f gfm -t gfm --ascii --preserve-tabs -o "$0" "$0"'
