@@ -29,6 +29,8 @@ This includes:
     -   XDM (requires `.use_utf8=no`)
 -   Screen lockers:
     -   physlock (won't see numbers as they are entered, but will work)
+    -   Plasma's screen lock (will however need to backspace away
+        previous answers before typing new ones)
     -   vlock (won't see numbers as they are entered, but will work)
     -   XScreenSaver
     -   XSecureLock
@@ -82,7 +84,14 @@ or specify an exact directory by
 
 ## Configuring
 
-1.  Pick a PAM service to add this to.
+1.  Ensure login manager compatibility.
+
+    If your distribution uses one of the incompatible login managers
+    listed above, please migrate to a supported one first. For example,
+    on Kubuntu, run `sudo apt-get install lightdm` and when prompted set
+    LightDM to be the default display manager.
+
+2.  Pick a PAM service to add this to.
 
     You can see all PAM services by `ls /etc/pam.d`.
 
@@ -93,18 +102,18 @@ or specify an exact directory by
     of logging in entirely if they do not support multi-step PAM
     conversations).
 
-2.  Open its config file in an editor.
+3.  Open its config file in an editor.
 
     This would be `/etc/pam.d/<servicename>`.
 
-3.  Locate a place that occurs after password authentication.
+4.  Locate a place that occurs after password authentication.
 
     You need to locate the last line that starts with `auth` or
     `@include`s a file that has lines that start with `auth`. Typically
     this will be either at the end of the file, or a line like
     `@include common-auth`.
 
-4.  Configure this module.
+5.  Configure this module.
 
     After all existing password authentication, add a section like:
 
