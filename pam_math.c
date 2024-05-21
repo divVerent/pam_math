@@ -397,6 +397,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       msg.msg_style = PAM_PROMPT_ECHO_ON;
       msg.msg = question;
       retval = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
+      free(question);
       if (retval != PAM_SUCCESS) {
         return retval;
       }
@@ -414,6 +415,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     }
 
     // Fallthrough when all attempts are exhausted.
+    free(correct);
     struct pam_message msg;
     const struct pam_message *pmsg = &msg;
     struct pam_response *resp = NULL;
@@ -427,7 +429,8 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     free(resp);
     return PAM_AUTH_ERR;
 
-  correct_answer:;
+  correct_answer:
+    free(correct);
   }
 
   return PAM_SUCCESS;
