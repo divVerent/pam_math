@@ -423,9 +423,11 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       retval = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
       free(msg_question);
       if (retval != PAM_SUCCESS) {
+        free(question);
         return retval;
       }
       if (resp == NULL || resp[0].resp == NULL) {
+        free(question);
         return PAM_SERVICE_ERR;
       }
 
