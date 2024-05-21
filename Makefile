@@ -23,6 +23,10 @@ iwyu:
 		iwyu $$x; \
 	done
 
+.PHONY: clang-format
+clang-format:
+	clang-format -i *.[ch]
+
 pam_math.so: pam_module.o asprintf.o math_questions.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
