@@ -2,7 +2,6 @@
 
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN
-#include <locale.h>   // for setlocale, NULL, LC_CTYPE
 #include <math.h>     // for sqrt
 #include <stdlib.h>   // for malloc
 #include <stdio.h>    // for fprintf, sscanf, stderr, NULL, size_t
@@ -232,10 +231,9 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   }
 
   if (config->use_utf8 < 0) {
-    // NOTE: This also is somewhat evil, as it can interfere with other threads.
-    char *prev_ctype = setlocale(LC_CTYPE, "");
+    // NOTE: Not calling setlocale here.
+    // If the calling program doesn't call it, we probably shouldn't either.
     config->use_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
-    setlocale(LC_CTYPE, prev_ctype);
   }
 
   return config;
