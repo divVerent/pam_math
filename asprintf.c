@@ -12,21 +12,21 @@ char *d0_asprintf(const char *restrict fmt, ...) {
   int n = vsnprintf(tiny, sizeof(tiny), fmt, ap);
   va_end(ap);
   if (n < 0 || n >= INT_MAX) {
-    fprintf(stderr, "FATAL: vsnprintf unexpectedly returned %d\n", n);
-    abort();
+    fprintf(stderr, "ERROR: vsnprintf unexpectedly returned %d\n", n);
+    return NULL;
   }
   char *buf = malloc(n + 1);
   if (buf == NULL) {
-    fprintf(stderr, "FATAL: could not allocate %d bytes\n", n + 1);
-    abort();
+    fprintf(stderr, "ERROR: could not allocate %d bytes\n", n + 1);
+    return NULL;
   }
   va_start(ap, fmt);
   int m = vsnprintf(buf, n + 1, fmt, ap);
   va_end(ap);
   if (m != n) {
     fprintf(stderr,
-            "FATAL: vsnprintf non-deterministic: returned %d, then %d\n", n, m);
-    abort();
+            "ERROR: vsnprintf non-deterministic: returned %d, then %d\n", n, m);
+    return NULL;
   }
   buf[n] = 0;
   return buf;

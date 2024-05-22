@@ -30,6 +30,9 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     for (int j = 0; j < num_attempts(config); ++j) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
       char *msg_question = d0_asprintf("%s%s", prefix, question);
+      if (msg_question == NULL) {
+        return PAM_SERVICE_ERR;
+      }
 
       struct pam_message msg;
       const struct pam_message *pmsg = &msg;
