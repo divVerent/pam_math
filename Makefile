@@ -1,7 +1,17 @@
-CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -fPIC -O3 -fvisibility=hidden
-LDFLAGS = -fPIC -shared
+CFLAGS ?= -std=c99 -Wall -Wextra -Wpedantic -O3
+LDFLAGS ?=
+
 LDLIBS = -lpam -lm
 PAM_LIBRARY_PATH = $(shell ./detect_pam_library_path.sh)
+
+# Make a library.
+CFLAGS_LIB = -fPIC -fvisibility=hidden
+LDFLAGS_LIB = -fPIC -shared
+
+# Enable LTO.
+LD = $(CC)
+CFLAGS_LIB += -flto
+LDFLAGS_LIB += $(CFLAGS) $(CFLAGS_LIB)
 
 .PHONY: all
 all: pam_math.so
@@ -29,7 +39,7 @@ clang-format:
 	clang-format -i *.[ch]
 
 pam_math.so: pam_module.o asprintf.o math_questions.o
-	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(LD) $(LDFLAGS) $(LDFLAGS_LIB) -o $@ $^ $(LDLIBS)
 
 %.o: %.c $(wildcard *.h)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(CFLAGS_LIB) -c -o $@ $<
