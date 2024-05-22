@@ -56,6 +56,8 @@ implement the full PAM conversation, such as:
     -   slock
     -   Swaylock
 
+In addition the login prompt of macOS is not supported.
+
 ## Compiling
 
 You need `make` and a C compiler installed (either `gcc` or `clang` will
