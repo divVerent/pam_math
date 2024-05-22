@@ -1,0 +1,98 @@
+[
+  {
+    "symbol": [
+      "PAM_AUTH_ERR",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "PAM_CONV",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "PAM_ERROR_MSG",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "PAM_PROMPT_ECHO_ON",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "PAM_SERVICE_ERR",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "PAM_SUCCESS",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "pam_conv",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "pam_get_item",
+      "private",
+      "<security/pam_modules.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "pam_handle_t",
+      "private",
+      "<security/pam_modules.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "pam_message",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "pam_response",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  },
+  {
+    "symbol": [
+      "pam_strerror",
+      "private",
+      "<security/pam_appl.h>",
+      "public"
+    ]
+  }
+]

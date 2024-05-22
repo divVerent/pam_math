@@ -1,11 +1,11 @@
 #include "questions.h"
 
 #include <langinfo.h> // for nl_langinfo, CODESET
-#include <limits.h>   // for INT_MAX, INT_MIN
+#include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
 #include <math.h>     // for sqrt
-#include <stdio.h>    // for fprintf, sscanf, stderr, NULL, size_t
-#include <stdlib.h>   // for malloc
-#include <string.h>   // for strncmp, strcmp, strlen
+#include <stdio.h>    // for fprintf, sscanf, stderr, NULL, fclose, fopen
+#include <stdlib.h>   // for abs, malloc
+#include <string.h>   // for strcmp, strncmp, strlen
 
 #include "asprintf.h" // for d0_asprintf
 

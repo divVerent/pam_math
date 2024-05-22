@@ -1,11 +1,7 @@
-#include <security/pam_modules.h> // for PAM_EXTERN, pam_get_user, pam_sm_a...
-#include <stdio.h>                // for fprintf, stderr
-#include <stdlib.h>               // for free, NULL
-
-#if defined(__FreeBSD__) || defined(__APPLE__)
-// This defines some stuff that's defined in pam_modules.h on Linux.
-#include <security/pam_appl.h>
-#endif
+#include <security/pam_appl.h>    // for pam_strerror, pam_response, PAM_SU...
+#include <security/pam_modules.h> // for pam_handle_t, PAM_EXTERN, pam_get_...
+#include <stdio.h>                // for fprintf, NULL, stderr
+#include <stdlib.h>               // for free
 
 #include "asprintf.h"  // for d0_asprintf
 #include "questions.h" // for build_config, check_answer, make_q...

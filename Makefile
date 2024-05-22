@@ -31,7 +31,7 @@ clean:
 .PHONY: iwyu
 iwyu:
 	for x in *.[ch]; do \
-		iwyu $$x; \
+		iwyu -Xiwyu --mapping_file=iwyu.imp -Xiwyu --update_comments $$x; \
 	done
 
 .PHONY: clang-format

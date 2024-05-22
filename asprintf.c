@@ -2,8 +2,8 @@
 
 #include <limits.h> // for INT_MAX
 #include <stdarg.h> // for va_end, va_start, va_list
-#include <stdio.h>  // for fprintf, vsnprintf, stderr
-#include <stdlib.h> // for abort, malloc
+#include <stdio.h>  // for fprintf, vsnprintf, NULL, stderr
+#include <stdlib.h> // for free, malloc
 
 char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
