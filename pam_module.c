@@ -100,30 +100,6 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
   return PAM_SUCCESS;
 }
 
-PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh __attribute__((unused)),
-                              int flags __attribute__((unused)),
-                              int argc __attribute__((unused)),
-                              const char **argv __attribute__((unused)))
-    __attribute__((__visibility__("default")));
-PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh __attribute__((unused)),
-                              int flags __attribute__((unused)),
-                              int argc __attribute__((unused)),
-                              const char **argv __attribute__((unused))) {
-  return PAM_SUCCESS;
-}
-
-PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh __attribute__((unused)),
-                                int flags __attribute__((unused)),
-                                int argc __attribute__((unused)),
-                                const char **argv __attribute__((unused)))
-    __attribute__((__visibility__("default")));
-PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t *pamh __attribute__((unused)),
-                                int flags __attribute__((unused)),
-                                int argc __attribute__((unused)),
-                                const char **argv __attribute__((unused))) {
-  return PAM_SUCCESS;
-}
-
 PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
                                    int flags __attribute__((unused)), int argc,
                                    const char **argv)
