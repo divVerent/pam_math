@@ -26,6 +26,7 @@ char *d0_asprintf(const char *restrict fmt, ...) {
   if (m != n) {
     fprintf(stderr,
             "ERROR: vsnprintf non-deterministic: returned %d, then %d\n", n, m);
+    free(buf);
     return NULL;
   }
   buf[n] = 0;
