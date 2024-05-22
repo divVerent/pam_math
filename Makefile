@@ -1,5 +1,6 @@
 CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -fPIC -O3
-LDFLAGS = -fPIC -shared -lpam
+LDFLAGS = -fPIC -shared
+LDLIBS = -lpam -lm
 PAM_LIBRARY_PATH = $(shell ./detect_pam_library_path.sh)
 
 .PHONY: all
@@ -28,7 +29,7 @@ clang-format:
 	clang-format -i *.[ch]
 
 pam_math.so: pam_module.o asprintf.o math_questions.o
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 %.o: %.c $(wildcard *.h)
 	$(CC) $(CFLAGS) -c -o $@ $<
