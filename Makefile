@@ -1,4 +1,4 @@
-CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -fPIC -O3
+CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -fPIC -O3 -fvisibility=hidden
 LDFLAGS = -fPIC -shared
 LDLIBS = -lpam -lm
 PAM_LIBRARY_PATH = $(shell ./detect_pam_library_path.sh)
