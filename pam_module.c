@@ -125,6 +125,9 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
   }
 
   config_t *config = build_config(user, argc, argv);
+  if (config == NULL) {
+    return PAM_SERVICE_ERR;
+  }
   int result = ask_questions(pamh, config);
   free(config);
   return result;

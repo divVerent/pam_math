@@ -16,6 +16,10 @@ char *d0_asprintf(const char *restrict fmt, ...) {
     abort();
   }
   char *buf = malloc(n + 1);
+  if (buf == NULL) {
+    fprintf(stderr, "FATAL: could not allocate %d bytes\n", n + 1);
+    abort();
+  }
   va_start(ap, fmt);
   int m = vsnprintf(buf, n + 1, fmt, ap);
   va_end(ap);

@@ -41,6 +41,9 @@ int num_attempts(config_t *config) { return config->attempts; }
 
 config_t *build_config(const char *user, int argc, const char **argv) {
   config_t *config = malloc(sizeof(config_t));
+  if (config == NULL) {
+    return NULL;
+  }
   config->questions = 3;
   config->attempts = 3;
   config->amin = 0;
@@ -390,6 +393,9 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   fclose(devrandom);
 
   *answer_state = malloc(sizeof(answer_state_t));
+  if (*answer_state == NULL) {
+    return NULL;
+  }
   (*answer_state)->answer = c;
   return d0_asprintf("What is %s%s%d%s %s %s%d%s%s? ",
                      op_prefix,                             //
