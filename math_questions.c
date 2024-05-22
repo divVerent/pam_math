@@ -252,7 +252,12 @@ static int randint(FILE *devrandom, int min, int max) {
   unsigned int rmax = (UINT_MAX / d) * d;
   for (;;) {
     unsigned int r;
-    fread(&r, sizeof(r), 1, devrandom);
+    if (fread(&r, sizeof(r), 1, devrandom) != 1) {
+      fprintf(
+          stderr,
+          "ERROR: /dev/random did not read exactly %d bytes; trying again...",
+          (int)sizeof(r));
+    }
     if (r < rmax) {
       return min + r % d;
     }

@@ -25,9 +25,10 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
   }
 
   for (int i = 0; i < num_questions(config); ++i) {
-    answer_state_t *answer_state;
+    answer_state_t *answer_state = NULL;
     char *question = make_question(config, &answer_state);
     if (question == NULL) {
+      free(answer_state);
       fprintf(stderr, "ERROR: could not generate question\n");
       return PAM_SERVICE_ERR;
     }
@@ -36,6 +37,8 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
       char *msg_question = d0_asprintf("%s%s", prefix, question);
       if (msg_question == NULL) {
+        free(question);
+        free(answer_state);
         fprintf(stderr, "ERROR: could not prefix question\n");
         return PAM_SERVICE_ERR;
       }
