@@ -1,4 +1,5 @@
 #include <security/pam_modules.h> // for PAM_EXTERN, pam_get_user, pam_sm_a...
+#include <stdio.h>                // for fprintf, stderr
 #include <stdlib.h>               // for free, NULL
 
 #if defined(__FreeBSD__) || defined(__APPLE__)
@@ -13,10 +14,13 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
   int retval = pam_get_item(pamh, PAM_CONV, &convp);
   if (retval != PAM_SUCCESS) {
+    fprintf(stderr, "ERROR: could not get PAM conversation: %s\n",
+            pam_strerror(pamh, retval));
     return retval;
   }
   const struct pam_conv *conv = convp;
   if (conv == NULL) {
+    fprintf(stderr, "ERROR: could not get PAM conversation: got NULL\n");
     return PAM_AUTH_ERR;
   }
 
@@ -24,6 +28,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     answer_state_t *answer_state;
     char *question = make_question(config, &answer_state);
     if (question == NULL) {
+      fprintf(stderr, "ERROR: could not generate question\n");
       return PAM_SERVICE_ERR;
     }
 
@@ -31,6 +36,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       const char *prefix = (j == 0) ? "" : "Incorrect. ";
       char *msg_question = d0_asprintf("%s%s", prefix, question);
       if (msg_question == NULL) {
+        fprintf(stderr, "ERROR: could not prefix question\n");
         return PAM_SERVICE_ERR;
       }
 
@@ -46,11 +52,14 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       if (retval != PAM_SUCCESS) {
         free(question);
         free(answer_state);
+        fprintf(stderr, "ERROR: could not get PAM conversation: %s\n",
+                pam_strerror(pamh, retval));
         return retval;
       }
       if (resp == NULL || resp[0].resp == NULL) {
         free(question);
         free(answer_state);
+        fprintf(stderr, "ERROR: could not get a response: got NULL\n");
         return PAM_SERVICE_ERR;
       }
 
@@ -124,11 +133,14 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
   const char *user;
   retval = pam_get_user(pamh, &user, "Username: ");
   if (retval != PAM_SUCCESS) {
+    fprintf(stderr, "ERROR: could not query username: %s\n",
+            pam_strerror(pamh, retval));
     return retval;
   }
 
   config_t *config = build_config(user, argc, argv);
   if (config == NULL) {
+    fprintf(stderr, "ERROR: could not get config\n");
     return PAM_SERVICE_ERR;
   }
   int result = ask_questions(pamh, config);

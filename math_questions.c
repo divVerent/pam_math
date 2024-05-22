@@ -42,6 +42,7 @@ int num_attempts(config_t *config) { return config->attempts; }
 config_t *build_config(const char *user, int argc, const char **argv) {
   config_t *config = malloc(sizeof(config_t));
   if (config == NULL) {
+    fprintf(stderr, "ERROR: could not allocate config\n");
     return NULL;
   }
   config->questions = 3;
@@ -261,7 +262,7 @@ static int randint(FILE *devrandom, int min, int max) {
 char *make_question(config_t *config, answer_state_t **answer_state) {
   FILE *devrandom = fopen("/dev/random", "rb");
   if (devrandom == NULL) {
-    perror("open /dev/random");
+    perror("ERROR: could not open /dev/random");
     return NULL;
   }
 
@@ -384,7 +385,8 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       op_suffix = "]";
       break;
     default:
-      fprintf(stderr, "Unreachable code: unsupported operation: %d\n", op);
+      fprintf(stderr, "ERROR: unreachable code: unsupported operation: %d\n",
+              op);
       fclose(devrandom);
       return NULL;
     }
@@ -394,6 +396,7 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
 
   *answer_state = malloc(sizeof(answer_state_t));
   if (*answer_state == NULL) {
+    fprintf(stderr, "ERROR: could not allocate answer_state\n");
     return NULL;
   }
   (*answer_state)->answer = c;
