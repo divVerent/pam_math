@@ -4,10 +4,9 @@
 #include <limits.h>   // for INT_MAX, INT_MIN
 #include <locale.h>   // for setlocale, NULL, LC_CTYPE
 #include <math.h>     // for sqrt
+#include <stdlib.h>   // for malloc
 #include <stdio.h>    // for fprintf, sscanf, stderr, NULL, size_t
-#include <stdlib.h>   // for rand, srand
 #include <string.h>   // for strncmp, strcmp, strlen
-#include <time.h>     // for time
 
 #include "asprintf.h" // for d0_asprintf
 
@@ -232,12 +231,6 @@ config_t *build_config(const char *user, int argc, const char **argv) {
     config->questions = 0;
   }
 
-  // RNG has to be initialized _somewhere_.
-  //
-  // NOTE: Technically it's evil to do this in a PAM module as it changes
-  // global state and can interfere with other threads.
-  srand(time(NULL));
-
   if (config->use_utf8 < 0) {
     // NOTE: This also is somewhat evil, as it can interfere with other threads.
     char *prev_ctype = setlocale(LC_CTYPE, "");
@@ -252,11 +245,29 @@ struct answer_state_s {
   int answer;
 };
 
+static int randint(FILE *devrandom, int min, int max) {
+  unsigned int d = (unsigned int)max - (unsigned int)min;
+  unsigned int rmax = (UINT_MAX / d) * d;
+  for (;;) {
+    unsigned int r;
+    fread(&r, sizeof(r), 1, devrandom);
+    if (r < rmax) {
+      return min + r % d;
+    }
+  }
+}
+
 char *make_question(config_t *config, answer_state_t **answer_state) {
+  FILE *devrandom = fopen("/dev/random", "rb");
+  if (devrandom == NULL) {
+    perror("open /dev/random");
+    return NULL;
+  }
+
   int op;
 
   do {
-    op = rand() % NUM_OPS;
+    op = randint(devrandom, 0, NUM_OPS - 1);
   } while ((config->ops & (1 << op)) == 0);
 
   int a, b, c;
@@ -267,20 +278,20 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     int q, r, s;
     switch (op) {
     case ADD:
-      a = config->amin + rand() % (config->amax - config->amin + 1);
-      b = config->amin + rand() % (config->amax - config->amin + 1);
+      a = randint(devrandom, config->amin, config->amax);
+      b = randint(devrandom, config->amin, config->amax);
       c = a + b;
       op_str = "+";
       break;
     case SUB:
-      c = config->amin + rand() % (config->amax - config->amin + 1);
-      b = config->amin + rand() % (config->amax - config->amin + 1);
+      c = randint(devrandom, config->amin, config->amax);
+      b = randint(devrandom, config->amin, config->amax);
       a = c + b;
       op_str = "-";
       break;
     case MUL:
-      a = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      a = randint(devrandom, config->mmin, config->mmax);
+      b = randint(devrandom, config->mmin, config->mmax);
       c = a * b;
       if (config->use_utf8) {
         op_str = "×";
@@ -289,8 +300,8 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       }
       break;
     case DIV:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      c = randint(devrandom, config->mmin, config->mmax);
+      b = randint(devrandom, config->mmin, config->mmax);
       if (b == 0) {
         continue;
       }
@@ -302,40 +313,40 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       }
       break;
     case MOD:
-      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      q = randint(devrandom, config->mmin, config->mmax);
+      b = randint(devrandom, config->mmin, config->mmax);
       if (b == 0) {
         continue;
       }
       s = (b < 0 ? -1 : +1);
       // mod result always agrees in sign with divisor.
-      c = s * (rand() % b);
+      c = s * randint(devrandom, 0, abs(b) - 1);
       a = q * b + c;
       op_str = "mod";
       break;
     case REM:
-      q = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      q = randint(devrandom, config->mmin, config->mmax);
+      b = randint(devrandom, config->mmin, config->mmax);
       if (b == 0) {
         continue;
       }
       // rem result always agrees in sign with dividend.
       // The dividend is not computed yet though, but only the result is!
       s = (b < 0 ? -1 : +1);
-      s *= (q < 0 ? -1 : q > 0 ? +1 : (rand() % 2) * 2 - 1);
-      c = s * (rand() % b);
+      s *= (q < 0 ? -1 : q > 0 ? +1 : randint(devrandom, 0, 1) * 2 - 1);
+      c = s * randint(devrandom, 0, abs(b) - 1);
       a = q * b + c;
       op_str = "rem";
       break;
     case DIV_WITH_MOD:
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      c = randint(devrandom, config->mmin, config->mmax);
+      b = randint(devrandom, config->mmin, config->mmax);
       if (b == 0) {
         continue;
       }
       s = (b < 0 ? -1 : +1);
       // mod result always agrees in sign with divisor.
-      r = s * (rand() % b);
+      r = s * randint(devrandom, 0, abs(b) - 1);
       a = c * b + r;
       if (config->use_utf8) {
         op_prefix = "⌊";
@@ -352,16 +363,16 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       // Incorrect. Login failed.
       // In Haskell, both quot and div are 3 here.
       // Something is wrong here...
-      c = config->mmin + rand() % (config->mmax - config->mmin + 1);
-      b = config->mmin + rand() % (config->mmax - config->mmin + 1);
+      c = randint(devrandom, config->mmin, config->mmax);
+      b = randint(devrandom, config->mmin, config->mmax);
       if (b == 0) {
         continue;
       }
       // rem result always agrees in sign with dividend.
       // The dividend is not computed yet though, but only the result is!
       s = (b < 0 ? -1 : +1);
-      s *= (c < 0 ? -1 : c > 0 ? +1 : (rand() % 2) * 2 - 1);
-      r = s * (rand() % b);
+      s *= (c < 0 ? -1 : c > 0 ? +1 : randint(devrandom, 0, 1) * 2 - 1);
+      r = s * randint(devrandom, 0, abs(b) - 1);
       a = c * b + r;
       op_prefix = "[";
       if (config->use_utf8) {
@@ -373,9 +384,12 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       break;
     default:
       fprintf(stderr, "Unreachable code: unsupported operation: %d\n", op);
+      fclose(devrandom);
       return NULL;
     }
   } while (op_str == NULL);
+
+  fclose(devrandom);
 
   *answer_state = malloc(sizeof(answer_state_t));
   (*answer_state)->answer = c;
