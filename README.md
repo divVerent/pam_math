@@ -159,7 +159,7 @@ The following `ops` are available:
 |-----------|-------------------------|-----------------------|----------------------------|-----------------------------------------------|
 | `+`       | Addition                | `x = a + b`           | `amin ≤ a, b ≤ amax`       |                                               |
 | `-`       | Subtraction             | `x = a - b`           | `amin ≤ b, x ≤ amax`       |                                               |
-| `*`       | Multiplication          | `x = a \* b`          | `mmin ≤ a, b ≤ mmax`       |                                               |
+| `*`       | Multiplication          | `x = a * b`           | `mmin ≤ a, b ≤ mmax`       |                                               |
 | `/`       | Remainder-less division | `x = a / b`           | `mmin ≤ b, x ≤ mmax`       |                                               |
 | `d`       | Division w/ remainder   | `x = ⌊a / b⌋`         | `mmin ≤ b, x ≤ mmax`       | Remainder has same sign as `b` (Python style) |
 | `q`       | Division w/ remainder   | `x = [a / b]`         | `mmin ≤ b, x ≤ mmax`       | Remainder has same sign as `a` (C style)      |
