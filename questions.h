@@ -4,6 +4,7 @@
 typedef struct config_s config_t;
 
 config_t *build_config(const char *user, int argc, const char **argv);
+void free_config(config_t *config);
 
 int num_questions(config_t *config);
 int num_attempts(config_t *config);

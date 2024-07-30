@@ -243,6 +243,10 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   return config;
 }
 
+void free_config(config_t *config) {
+  free(config);
+}
+
 struct answer_state_s {
   int answer;
 };

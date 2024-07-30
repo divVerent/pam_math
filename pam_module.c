@@ -143,6 +143,6 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
     return PAM_SERVICE_ERR;
   }
   int result = ask_questions(pamh, config);
-  free(config);
+  free_config(config);
   return result;
 }
