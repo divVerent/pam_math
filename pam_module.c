@@ -17,14 +17,14 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const struct pam_conv *conv = convp;
   if (conv == NULL) {
     fprintf(stderr, "ERROR: could not get PAM conversation: got NULL\n");
-    return PAM_AUTH_ERR;
+    return PAM_SERVICE_ERR;
   }
 
   for (int i = 0; i < num_questions(config); ++i) {
     answer_state_t *answer_state = NULL;
     char *question = make_question(config, &answer_state);
     if (question == NULL) {
-      free(answer_state);
+      free_answer(answer_state);
       fprintf(stderr, "ERROR: could not generate question\n");
       return PAM_SERVICE_ERR;
     }
@@ -34,7 +34,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       char *msg_question = d0_asprintf("%s%s", prefix, question);
       if (msg_question == NULL) {
         free(question);
-        free(answer_state);
+        free_answer(answer_state);
         fprintf(stderr, "ERROR: could not prefix question\n");
         return PAM_SERVICE_ERR;
       }
@@ -50,14 +50,14 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
       if (retval != PAM_SUCCESS) {
         free(question);
-        free(answer_state);
+        free_answer(answer_state);
         fprintf(stderr, "ERROR: could not get PAM conversation: %s\n",
                 pam_strerror(pamh, retval));
         return retval;
       }
       if (resp == NULL || resp[0].resp == NULL) {
         free(question);
-        free(answer_state);
+        free_answer(answer_state);
         fprintf(stderr, "ERROR: could not get a response: got NULL\n");
         return PAM_SERVICE_ERR;
       }
@@ -73,7 +73,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
     // Fallthrough when all attempts are exhausted.
     free(question);
-    free(answer_state);
+    free_answer(answer_state);
 
     struct pam_message msg;
     const struct pam_message *pmsg = &msg;
@@ -90,7 +90,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
   correct_answer:
     free(question);
-    free(answer_state);
+    free_answer(answer_state);
   }
 
   return PAM_SUCCESS;

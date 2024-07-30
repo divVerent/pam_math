@@ -421,3 +421,7 @@ int check_answer(answer_state_t *answer_state, const char *given) {
   }
   return given_int == answer_state->answer;
 }
+
+void free_answer(answer_state_t *answer_state) {
+  free(answer_state);
+}

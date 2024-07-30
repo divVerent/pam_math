@@ -12,5 +12,6 @@ typedef struct answer_state_s answer_state_t;
 
 char *make_question(config_t *config, answer_state_t **answer_state);
 int check_answer(answer_state_t *answer_state, const char *given);
+void free_answer(answer_state_t *answer_state);
 
 #endif
