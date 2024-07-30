@@ -6,19 +6,20 @@
 #include <stdio.h>    // for fprintf, sscanf, stderr, NULL, fclose, fopen
 #include <stdlib.h>   // for abs, malloc
 #include <string.h>   // for strcmp, strncmp, strlen
+#include <regex.h>
 
 #include "asprintf.h" // for d0_asprintf
 
-#define TAGS_MAX 1024
+#define REGERROR_MAX 1024
+#define MATCHER_MAX 1024
 #define CSV_MAX 4096
 
 struct config_s {
   int questions; // Used by pam_math.c.
   int attempts;  // Used by pam_math.c.
   char filename[PATH_MAX];
-  char tags[TAGS_MAX];
+  regex_t matcher;
   int ignore_case;
-  int edit_distance;
 };
 
 int num_questions(config_t *config) { return config->questions; }
@@ -28,7 +29,7 @@ int num_attempts(config_t *config) { return config->attempts; }
 #define STRINGIFY(s) STRINGIFY2(s)
 
 #define PATH_MAX_STR STRINGIFY(PATH_MAX)
-#define TAGS_MAX_STR STRINGIFY(TAGS_MAX)
+#define MATCHER_MAX_STR STRINGIFY(MATCHER_MAX)
 
 config_t *build_config(const char *user, int argc, const char **argv) {
   config_t *config = malloc(sizeof(config_t));
@@ -38,12 +39,12 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   }
   config->questions = 3;
   config->attempts = 3;
-  strncpy(config->filename, sizeof(config->filename), "/usr/lib/pam_math/questions.csv");
+  strncpy(config->filename, "/usr/lib/pam_math/questions.csv", sizeof(config->filename));
   config->filename[sizeof(config->filename)-1] = 0;
-  *tags_re = 0;
   config->ignore_case = 0;
-  config->edit_distance = 0;
   size_t userlen = strlen(user);
+  char matcher[MATCHER_MAX];
+  *matcher = 0;
   for (int i = 0; i < argc; ++i) {
     const char *arg = argv[i];
     const char *field;
@@ -60,26 +61,46 @@ config_t *build_config(const char *user, int argc, const char **argv) {
     if (sscanf(field, "attempts=%d", &config->attempts) == 1) {
       continue;
     }
-    if (sscanf(field, "file=%" PATH_MAX_STR "s", &config->filename) == 1) {
+    if (sscanf(field, "file=%" PATH_MAX_STR "s", config->filename) == 1) {
       continue;
     }
-    if (sscanf(field, "tags=%" PATH_MAX_STR "s", &config->tags) == 1) {
+    if (sscanf(field, "matcher=%" PATH_MAX_STR "s", matcher) == 1) {
       continue;
     }
     if (sscanf(field, "ignore_case=%d", &config->ignore_case) == 1) {
       continue;
     }
-    if (sscanf(field, "edit_distance=%d", &config->edit_distance) == 1) {
-      continue;
-    }
+    // TODO edit distance?
     fprintf(stderr, "Unexpected option in config: %s\n", arg);
+  }
+
+  char fullmatcher[MATCHER_MAX + 4];
+  snprintf(fullmatcher, sizeof(fullmatcher), "^(%s)$", matcher);
+  fullmatcher[sizeof(fullmatcher)-1] = 0;
+  int reg_error = regcomp(&config->matcher, fullmatcher, REG_EXTENDED | REG_NOSUB);
+  if (reg_error != 0) {
+    char errbuf[REGERROR_MAX];
+    *errbuf = 0;
+    regerror(reg_error, &config->matcher, errbuf, sizeof(errbuf));
+    fprintf(stderr, "Failed to compile regex %s: %s\n", matcher, errbuf);
+    free(config);
+    return NULL;
   }
 
   return config;
 }
 
+void free_config(config_t *config) {
+  if (config == NULL) {
+    return;
+  }
+  regfree(&config->matcher);
+  free(config);
+}
+
 struct answer_state_s {
-  const char *answer;
+  char *answer;
+  int ignore_case;
 };
 
 static int randint(FILE *devrandom, int min, int max) {
@@ -105,19 +126,20 @@ static char *csv_read(char **buf) {
   }
   switch (**buf) {
     case '"': {
-        char *ret = malloc(strlen(buf) + 1);
+        char *ret = malloc(strlen(*buf) + 1);
         char *retpos = ret;
         for (;;) {
           ++buf;
           char *endptr = strchr(*buf, '"');
           if (endptr == NULL) {
             // Technically invalid CSV.
-            strcpy(retpos, buf);
+            strcpy(retpos, *buf);
             *buf = NULL;
             return ret;
           }
-          strncpy(retpos, buf, endptr - *buf);
+          strncpy(retpos, *buf, endptr - *buf);
           retpos += endptr - *buf;
+          *retpos = 0;
           *buf = endptr + 1;
           switch (**buf) {
             case 0:
@@ -131,7 +153,7 @@ static char *csv_read(char **buf) {
               return ret;
             default:
               // Technically invalid CSV.
-              strcpy(retpos, buf);
+              strcpy(retpos, *buf);
               *buf = NULL;
               return ret;
           }
@@ -145,7 +167,7 @@ static char *csv_read(char **buf) {
         *buf = NULL;
         return ret;
       } else {
-        char *ret = strndup(buf, endptr - buf);
+        char *ret = strndup(*buf, endptr - *buf);
         *buf = endptr + 1;
         return ret;
       }
@@ -162,24 +184,33 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
 
   // Read questions file.
   FILE *questions = fopen(config->filename, "r");
+
   // Pick a question at random.
-  fgets(buf, sizeof(buf), questions); // Skip CSV header.
   int index = 0;
   char *accepted_question = NULL;
   char *accepted_answer = NULL;
   char buf[CSV_MAX];
+  fgets(buf, sizeof(buf), questions); // Skip CSV header.
   while (fgets(buf, sizeof(buf), questions)) {
     char *bufptr = buf;
-    char *tags = csv_read(&bufptr);
+    char *match = csv_read(&bufptr);
     char *question = csv_read(&bufptr);
     char *answer = csv_read(&bufptr);
-    if (answer == NULL) {
+    if (match == NULL || question == NULL || answer == NULL) {
+      free(answer);
       free(question);
-      free(tags);
+      free(match);
       continue;
     }
-    // TODO check tags.
-    free(tags);
+
+    if (regexec(&config->matcher, match, 0, NULL, 0) != 0) {
+      free(answer);
+      free(question);
+      free(match);
+      continue;
+    }
+
+    free(match);
     ++index;
     if (randint(devrandom, 0, index) == 0) {
       free(accepted_answer);
@@ -208,10 +239,14 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     return NULL;
   }
   (*answer_state)->answer = accepted_answer;
+  (*answer_state)->ignore_case = config->ignore_case;
   return accepted_question;
 }
 
 int check_answer(answer_state_t *answer_state, const char *given) {
+  if (answer_state->ignore_case) {
+    return !strcasecmp(given, answer_state->answer);
+  }
   return !strcmp(given, answer_state->answer);
 }
 
