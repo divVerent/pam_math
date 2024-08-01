@@ -33,3 +33,14 @@ char *d0_asprintf(const char *restrict fmt, ...) {
   buf[n] = 0;
   return buf;
 }
+
+char *d0_strndup(const char *s, size_t n) {
+  char *out = malloc(n + 1);
+  if (out == NULL) {
+    fprintf(stderr, "ERROR: could not allocate %d bytes\n", n + 1);
+    return NULL;
+  }
+  strncpy(out, s, n);
+  out[n] = 0;
+  return out;
+}

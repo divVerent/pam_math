@@ -10,7 +10,7 @@
 #include <string.h>   // for strcmp, strncmp, strlen
 #include <regex.h>
 
-#include "asprintf.h" // for d0_asprintf
+#include "helpers.h" // for d0_asprintf
 
 #define REGERROR_MAX 1024
 #define MATCHER_MAX 1024
@@ -169,11 +169,11 @@ static char *csv_read(char **buf) {
     default: {
       char *endptr = strchr(*buf, ',');
       if (endptr == NULL) {
-        char *ret = strdup(*buf);
+        char *ret = d0_strndup(*buf, strlen(*buf));
         *buf = NULL;
         return ret;
       } else {
-        char *ret = strndup(*buf, endptr - *buf);
+        char *ret = d0_strndup(*buf, endptr - *buf);
         *buf = endptr + 1;
         return ret;
       }

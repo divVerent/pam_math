@@ -5,6 +5,9 @@
 #include <stdio.h>                // for fprintf, NULL, stderr
 #include <stdlib.h>               // for free
 
+#include "helpers.h"  // for d0_asprintf
+#include "questions.h" // for build_config, check_answer, make_q...
+
 static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
   int retval = pam_get_item(pamh, PAM_CONV, &convp);
