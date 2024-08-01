@@ -2,9 +2,9 @@
 
 #include <limits.h> // for INT_MAX
 #include <stdarg.h> // for va_end, va_start, va_list
-#include <stdio.h>  // for fprintf, vsnprintf, NULL, stderr
-#include <stdlib.h> // for free, malloc
-#include <string.h>
+#include <stdio.h>  // for fprintf, stderr, vsnprintf
+#include <stdlib.h> // for malloc, free
+#include <string.h> // for strncpy
 
 char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;

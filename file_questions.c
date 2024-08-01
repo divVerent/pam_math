@@ -1,15 +1,13 @@
-#include <langinfo.h> // for nl_langinfo, CODESET
-#include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
-#include <math.h>     // for sqrt
-#include <regex.h>
-#include <stdio.h>  // for fprintf, sscanf, stderr, NULL, fclose, fopen
-#include <stdlib.h> // for abs, malloc
-#include <string.h>
-#include <string.h> // for strcmp, strncmp, strlen
-#include <strings.h>
+#include "questions.h" // for config_t, answer_state_t, build_config, check...
 
-#include "helpers.h" // for d0_asprintf
-#include "questions.h"
+#include <limits.h>  // for PATH_MAX, UINT_MAX
+#include <regex.h>   // for regcomp, regerror, regexec, regfree, REG_EXTE...
+#include <stdio.h>   // for NULL, fprintf, sscanf, stderr, fclose, fgets
+#include <stdlib.h>  // for free, malloc
+#include <string.h>  // for strlen, strchr, strcpy, strncpy, strcmp, strncmp
+#include <strings.h> // for strcasecmp
+
+#include "helpers.h" // for d0_strndup
 
 #define REGERROR_MAX 1024
 #define MATCHER_MAX 1024
