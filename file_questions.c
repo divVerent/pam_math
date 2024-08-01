@@ -256,6 +256,10 @@ int check_answer(answer_state_t *answer_state, const char *given) {
   return !strcmp(given, answer_state->answer);
 }
 
+char *get_answer(answer_state_t *answer_state) {
+  return d0_strndup(answer_state->answer, strlen(answer_state->answer));
+}
+
 void free_answer(answer_state_t *answer_state) {
   if (answer_state == NULL) {
     return;
