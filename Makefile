@@ -21,8 +21,15 @@ IWYUFLAGS = -Xiwyu --mapping_file=iwyu.imp -Xiwyu --update_comments
 all: pam_questions_file.so pam_math.so
 
 .PHONY: test
-test: pam_questions_file.so pam_math.so
-	./test.sh
+test: test_pam_questions_file test_pam_math
+
+.PHONY: test_pam_math
+test_pam_questions_file: pam_questions_file.so
+	./test_pam_questions_file.sh
+
+.PHONY: test_pam_math
+test_pam_math: pam_math.so
+	./test_pam_math.sh
 
 .PHONY: install
 install: pam_questions_file.so pam_math.so
