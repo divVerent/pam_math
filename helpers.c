@@ -56,6 +56,6 @@ char *d0_strndup(const char *s, size_t n) {
     fprintf(stderr, "ERROR: could not allocate %d bytes\n", (int)(n + 1));
     return NULL;
   }
-  d0_strlcpy(out, s, n);
+  d0_strlcpy(out, s, size);
   return out;
 }
