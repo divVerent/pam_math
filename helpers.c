@@ -4,7 +4,7 @@
 #include <stdarg.h> // for va_end, va_start, va_list
 #include <stdio.h>  // for fprintf, stderr, vsnprintf
 #include <stdlib.h> // for malloc, free
-#include <string.h> // for strncpy
+#include <string.h> // for memcpy, strlen
 
 char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
@@ -34,13 +34,28 @@ char *d0_asprintf(const char *restrict fmt, ...) {
   return buf;
 }
 
+void d0_strlcpy(char *dst, const char *src, size_t dst_size) {
+  if (dst_size == 0) {
+    return;
+  }
+  size_t dst_len = dst_size - 1;
+  size_t src_len = strlen(src);
+  size_t copy_len = (src_len < dst_len) ? src_len : dst_len;
+  memcpy(dst, src, copy_len);
+  dst[copy_len] = 0;
+}
+
 char *d0_strndup(const char *s, size_t n) {
-  char *out = malloc(n + 1);
+  size_t size = n + 1;
+  if (size < n) {
+    fprintf(stderr, "ERROR: invalid string length: %d\n", (int)n);
+    return NULL;
+  }
+  char *out = malloc(size);
   if (out == NULL) {
     fprintf(stderr, "ERROR: could not allocate %d bytes\n", (int)(n + 1));
     return NULL;
   }
-  strncpy(out, s, n);
-  out[n] = 0;
+  d0_strlcpy(out, s, n);
   return out;
 }

@@ -2,12 +2,13 @@
 
 #include <limits.h>  // for PATH_MAX, UINT_MAX
 #include <regex.h>   // for regcomp, regerror, regexec, regfree, REG_EXTE...
-#include <stdio.h>   // for NULL, fprintf, sscanf, fclose, stderr, fgets
+#include <stdio.h>   // for NULL, fprintf, sscanf, fclose, stderr, snprintf
 #include <stdlib.h>  // for free, malloc
-#include <string.h>  // for strcmp, strlen, strncmp, strncpy
+#include <string.h>  // for strcmp, strlen, strncmp
 #include <strings.h> // for strcasecmp
 
-#include "csv.h" // for csv_read, csv_start, csv_buf
+#include "csv.h"     // for csv_read, csv_start, csv_buf
+#include "helpers.h" // for d0_strlcpy
 
 #define REGERROR_MAX 1024
 #define MATCHER_MAX 1024
@@ -31,9 +32,6 @@ int num_attempts(config_t *config) { return config->attempts; }
 #define STRINGIFY2(s) #s
 #define STRINGIFY(s) STRINGIFY2(s)
 
-#define PATH_MAX_STR STRINGIFY(PATH_MAX)
-#define MATCHER_MAX_STR STRINGIFY(MATCHER_MAX)
-
 config_t *build_config(const char *user, int argc, const char **argv) {
   config_t *config = malloc(sizeof(config_t));
   if (config == NULL) {
@@ -42,13 +40,21 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   }
   config->questions = 3;
   config->attempts = 3;
-  strncpy(config->filename, "/usr/lib/pam_math/questions.csv",
-          sizeof(config->filename));
-  config->filename[sizeof(config->filename) - 1] = 0;
+  d0_strlcpy(config->filename, "/usr/lib/pam_math/questions.csv",
+             sizeof(config->filename));
   config->ignore_case = 0;
   size_t userlen = strlen(user);
   char matcher[MATCHER_MAX];
   *matcher = 0;
+
+  char file_scan_fmt[32];
+  snprintf(file_scan_fmt, sizeof(file_scan_fmt), "file=%%%ds", PATH_MAX - 1);
+  file_scan_fmt[sizeof(file_scan_fmt) - 1] = 0;
+  char matcher_scan_fmt[32];
+  snprintf(matcher_scan_fmt, sizeof(matcher_scan_fmt), "matcher=%%%ds",
+           MATCHER_MAX - 1);
+  matcher_scan_fmt[sizeof(matcher_scan_fmt) - 1] = 0;
+
   for (int i = 0; i < argc; ++i) {
     const char *arg = argv[i];
     const char *field;
@@ -65,10 +71,10 @@ config_t *build_config(const char *user, int argc, const char **argv) {
     if (sscanf(field, "attempts=%d", &config->attempts) == 1) {
       continue;
     }
-    if (sscanf(field, "file=%" PATH_MAX_STR "s", config->filename) == 1) {
+    if (sscanf(field, file_scan_fmt, config->filename) == 1) {
       continue;
     }
-    if (sscanf(field, "matcher=%" PATH_MAX_STR "s", matcher) == 1) {
+    if (sscanf(field, matcher_scan_fmt, matcher) == 1) {
       continue;
     }
     if (sscanf(field, "ignore_case=%d", &config->ignore_case) == 1) {

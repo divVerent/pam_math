@@ -2,7 +2,7 @@
 
 #include <stdio.h>  // for NULL
 #include <stdlib.h> // for malloc
-#include <string.h> // for strchr, strcpy, strlen, strncpy
+#include <string.h> // for strchr, strcpy, strlen, memcpy
 
 #include "helpers.h" // for d0_strndup
 
@@ -37,7 +37,7 @@ char *csv_read(char **buf) {
         *buf = NULL;
         return ret;
       }
-      strncpy(retpos, *buf, endptr - *buf);
+      memcpy(retpos, *buf, endptr - *buf);
       retpos += endptr - *buf;
       *retpos = 0;
       *buf = endptr + 1;
