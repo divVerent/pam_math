@@ -1,0 +1,8 @@
+question,answer,match
+"Expand (a+b)^2:",a^2+b^2+2ab,binomial
+"Expand (a-b)^2:",a^2+b^2-2ab,binomial
+"Expand (a+b)(a-b):",a^2-b^2,binomial
+"What is the capital of Germany?",Berlin,capitals
+"What is the capital of the USA?",Washington DC,capitals
+"What is the capital of Switzerland?",Bern,capitals
+"What is the capital of Ukraine?",Kyiv,capitals

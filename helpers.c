@@ -33,3 +33,29 @@ char *d0_asprintf(const char *restrict fmt, ...) {
   buf[n] = 0;
   return buf;
 }
+
+void d0_strlcpy(char *dst, const char *src, size_t dst_size) {
+  if (dst_size == 0) {
+    return;
+  }
+  size_t dst_len = dst_size - 1;
+  size_t src_len = strlen(src);
+  size_t copy_len = (src_len < dst_len) ? src_len : dst_len;
+  memcpy(dst, src, copy_len);
+  dst[copy_len] = 0;
+}
+
+char *d0_strndup(const char *s, size_t n) {
+  size_t size = n + 1;
+  if (size < n) {
+    fprintf(stderr, "ERROR: invalid string length: %d\n", (int)n);
+    return NULL;
+  }
+  char *out = malloc(size);
+  if (out == NULL) {
+    fprintf(stderr, "ERROR: could not allocate %d bytes\n", (int)(n + 1));
+    return NULL;
+  }
+  d0_strlcpy(out, s, size);
+  return out;
+}
