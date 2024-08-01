@@ -38,7 +38,7 @@ iwyu:
 clang-format:
 	clang-format -i *.[ch]
 
-pam_math.so: pam_module.o asprintf.o math_questions.o
+pam_math.so: pam_module.o helpers.o math_questions.o
 	$(LD) $(LDFLAGS) $(LDFLAGS_LIB) -o $@ $^ $(LDLIBS)
 
 %.o: %.c $(wildcard *.h)

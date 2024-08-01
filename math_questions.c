@@ -1,13 +1,13 @@
-#include "questions.h"
+#include "questions.h" // for config_t, answer_state_t, build_config, check...
 
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
 #include <math.h>     // for sqrt
-#include <stdio.h>    // for fprintf, sscanf, stderr, NULL, fclose, fopen
-#include <stdlib.h>   // for abs, malloc
+#include <stdio.h>    // for fprintf, stderr, sscanf, NULL, fclose, FILE
+#include <stdlib.h>   // for abs, free, malloc
 #include <string.h>   // for strcmp, strncmp, strlen
 
-#include "asprintf.h" // for d0_asprintf
+#include "helpers.h" // for d0_asprintf
 
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
@@ -230,22 +230,20 @@ config_t *build_config(const char *user, int argc, const char **argv) {
             config->amin, config->amax, config->mmin, config->mmax);
   }
 
-  if (config->ops == 0) {
-    config->questions = 0;
-  }
-
   if (config->use_utf8 < 0) {
     // NOTE: Not calling setlocale here.
     // If the calling program doesn't call it, we probably shouldn't either.
     config->use_utf8 = !strcmp(nl_langinfo(CODESET), "UTF-8");
   }
 
+  if (config->ops == 0) {
+    config->questions = 0;
+  }
+
   return config;
 }
 
-void free_config(config_t *config) {
-  free(config);
-}
+void free_config(config_t *config) { free(config); }
 
 struct answer_state_s {
   int answer;
@@ -426,6 +424,4 @@ int check_answer(answer_state_t *answer_state, const char *given) {
   return given_int == answer_state->answer;
 }
 
-void free_answer(answer_state_t *answer_state) {
-  free(answer_state);
-}
+void free_answer(answer_state_t *answer_state) { free(answer_state); }
