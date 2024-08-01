@@ -203,8 +203,7 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       free(match);
       continue;
     }
-    if (match_col != -1 &&
-        regexec(&config->matcher, match ? match : "", 0, NULL, 0) != 0) {
+    if (regexec(&config->matcher, match ? match : "", 0, NULL, 0) != 0) {
       free(answer);
       free(question);
       free(match);
