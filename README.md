@@ -200,7 +200,7 @@ It supports the following fields:
 | `attempts`    | `3`                               | Number of attempts per question (exceeding this fails authentication).                                     |
 | `file`        | `/usr/lib/pam_math/questions.csv` | Path to a CSV file with questions.                                                                         |
 | `ignore_case` | `0`                               | If set to 1, answers are case insensitive.                                                                 |
-| `match`       | \`\`                              | If set, a full-match regular expression for the CSV file's `match` column to select a subset of questions. |
+| `match`       |                                   | If set, a full-match regular expression for the CSV file's `match` column to select a subset of questions. |
 
 The questions file is a CSV that must contain a column with the exact
 name `question`, and another column with the exact name `answer`. If a
