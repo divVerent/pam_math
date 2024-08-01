@@ -147,6 +147,7 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   FILE *questions = fopen(config->filename, "r");
   if (questions == NULL) {
     perror("ERROR: could not open questions file");
+    fclose(devrandom);
     return NULL;
   }
 
