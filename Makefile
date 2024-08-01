@@ -18,15 +18,16 @@ IWYU = iwyu
 IWYUFLAGS = -Xiwyu --mapping_file=iwyu.imp -Xiwyu --update_comments
 
 .PHONY: all
-all: pam_math.so
+all: pam_questions_file.so pam_questions_math.so
 
 .PHONY: test
-test: pam_math.so
+test: pam_questions_file.so pam_questions_math.so
 	./test.sh
 
 .PHONY: install
-install: pam_math.so
-	install -m755 pam_math.so $(DESTDIR)$(PAM_LIBRARY_PATH)/
+install: pam_questions_file.so pam_questions_math.so
+	install -m755 pam_questions_file.so $(DESTDIR)$(PAM_LIBRARY_PATH)/
+	install -m755 pam_questions_math.so $(DESTDIR)$(PAM_LIBRARY_PATH)/
 
 .PHONY: clean
 clean:
@@ -42,7 +43,10 @@ iwyu:
 clang-format:
 	clang-format -i *.[ch]
 
-pam_math.so: pam_module.o helpers.o math_questions.o
+pam_questions_file.so: pam_module.o asprintf.o file_questions.o
+	$(LD) $(LDFLAGS) $(LDFLAGS_LIB) -o $@ $^ $(LDLIBS)
+
+pam_questions_math.so: pam_module.o asprintf.o math_questions.o
 	$(LD) $(LDFLAGS) $(LDFLAGS_LIB) -o $@ $^ $(LDLIBS)
 
 %.o: %.c $(wildcard *.h)

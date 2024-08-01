@@ -1,5 +1,7 @@
 #include "questions.h"
 
+#include <string.h>
+#include <strings.h>
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
 #include <math.h>     // for sqrt
@@ -13,6 +15,10 @@
 #define REGERROR_MAX 1024
 #define MATCHER_MAX 1024
 #define CSV_MAX 4096
+
+#ifndef PATH_MAX
+#define PATH_MAX _POSIX_PATH_MAX
+#endif
 
 struct config_s {
   int questions; // Used by pam_math.c.
@@ -190,26 +196,59 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   char *accepted_question = NULL;
   char *accepted_answer = NULL;
   char buf[CSV_MAX];
+  int match_col = -1, question_col = -1, answer_col = -1;
   fgets(buf, sizeof(buf), questions); // Skip CSV header.
+  char *bufptr = buf;
+  for (int col = 0;; ++col) {
+    char *col_name = csv_read(&bufptr);
+    if (col_name == NULL) {
+      break;
+    }
+    if (!strcasecmp(col_name, "match")) {
+      match_col = col;
+    } else if (!strcasecmp(col_name, "question")) {
+      question_col = col;
+    } else if (!strcasecmp(col_name, "answer")) {
+      answer_col = col;
+    }
+    free(col_name);
+  }
+  if (question_col == -1 || answer_col == -1) {
+    fprintf(stderr, "ERROR: no column named question or answer found\n");
+    return NULL;
+  }
+  int line = 1;
   while (fgets(buf, sizeof(buf), questions)) {
+    ++line;
+    char *match = NULL;
+    char *question = NULL;
+    char *answer = NULL;
     char *bufptr = buf;
-    char *match = csv_read(&bufptr);
-    char *question = csv_read(&bufptr);
-    char *answer = csv_read(&bufptr);
-    if (match == NULL || question == NULL || answer == NULL) {
+    for (int col = 0;; ++col) {
+      char *value = csv_read(&bufptr);
+      if (col == match_col) {
+        match = value;
+      } else if (col == question_col) {
+        question = value;
+      } else if (col == answer_col) {
+        answer = value;
+      } else {
+        free(value);
+      }
+    }
+    if (question == NULL || answer == NULL) {
+      fprintf(stderr, "WARNING: no question or answer in line found in line %d\n", line);
       free(answer);
       free(question);
       free(match);
       continue;
     }
-
-    if (regexec(&config->matcher, match, 0, NULL, 0) != 0) {
+    if (match_col != -1 && regexec(&config->matcher, match ? match : "", 0, NULL, 0) != 0) {
       free(answer);
       free(question);
       free(match);
       continue;
     }
-
     free(match);
     ++index;
     if (randint(devrandom, 0, index) == 0) {
