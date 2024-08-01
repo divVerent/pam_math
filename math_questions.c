@@ -415,6 +415,10 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
                      op_suffix);
 }
 
+char *get_answer(answer_state_t *answer_state) {
+  return d0_asprintf("%d", answer_state->answer);
+}
+
 int check_answer(answer_state_t *answer_state, const char *given) {
   int given_int;
   char too_much;

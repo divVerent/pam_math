@@ -13,6 +13,10 @@ LD = $(CC)
 CFLAGS_LIB += -flto
 LDFLAGS_LIB += $(CFLAGS) $(CFLAGS_LIB)
 
+# IWYU
+IWYU = iwyu
+IWYUFLAGS = -Xiwyu --mapping_file=iwyu.imp -Xiwyu --update_comments
+
 .PHONY: all
 all: pam_math.so
 
@@ -31,7 +35,7 @@ clean:
 .PHONY: iwyu
 iwyu:
 	for x in *.[ch]; do \
-		iwyu -Xiwyu --mapping_file=iwyu.imp -Xiwyu --update_comments $$x; \
+		$(IWYU) $(IWYUFLAGS) $$x; \
 	done
 
 .PHONY: clang-format

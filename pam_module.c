@@ -72,14 +72,21 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
 
     // Fallthrough when all attempts are exhausted.
     free(question);
+    char *correct_answer = get_answer(answer_state);
     free_answer(answer_state);
+
+    char *msg_error =
+        d0_asprintf("Incorrect. Correct would have been: %s. Login failed.",
+                    correct_answer);
+    free(correct_answer);
 
     struct pam_message msg;
     const struct pam_message *pmsg = &msg;
-    struct pam_response *resp = NULL;
     msg.msg_style = PAM_ERROR_MSG;
-    msg.msg = "Incorrect. Login failed.";
+    msg.msg = msg_error;
+    struct pam_response *resp = NULL;
     retval = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
+    free(msg_error);
     if (retval != PAM_SUCCESS) {
       return retval;
     }
