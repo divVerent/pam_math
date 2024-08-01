@@ -1,0 +1,2 @@
+auth required pam_questions_file.so \
+	user.questions=2 user.file=examples/questions.csv user.ignore_case=1

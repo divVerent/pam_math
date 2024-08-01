@@ -53,7 +53,7 @@ clang-format:
 pam_math.so: pam_module.o helpers.o math_questions.o
 	$(LD) $(LDFLAGS) $(LDFLAGS_LIB) -o $@ $^ $(LDLIBS)
 
-pam_questions_file.so: pam_module.o helpers.o file_questions.o
+pam_questions_file.so: pam_module.o helpers.o csv.o file_questions.o
 	$(LD) $(LDFLAGS) $(LDFLAGS_LIB) -o $@ $^ $(LDLIBS)
 
 %.o: %.c $(wildcard *.h)
