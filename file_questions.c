@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 1
+
 #include "questions.h" // for config_t, answer_state_t, build_config, check...
 
 #include <limits.h>  // for PATH_MAX, UINT_MAX
