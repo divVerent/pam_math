@@ -7,6 +7,7 @@
 #include <string.h>  // for strlen, strchr, strcpy, strncpy, strcmp, strncmp
 #include <strings.h> // for strcasecmp
 
+#include "csv.h"     // for csv_read
 #include "helpers.h" // for d0_strndup
 
 #define REGERROR_MAX 1024
@@ -129,60 +130,6 @@ static int randint(FILE *devrandom, int min, int max) {
   }
 }
 
-static char *csv_read(char **buf) {
-  if (*buf == NULL) {
-    return NULL;
-  }
-  switch (**buf) {
-  case '"': {
-    char *ret = malloc(strlen(*buf) + 1);
-    char *retpos = ret;
-    for (;;) {
-      ++buf;
-      char *endptr = strchr(*buf, '"');
-      if (endptr == NULL) {
-        // Technically invalid CSV.
-        strcpy(retpos, *buf);
-        *buf = NULL;
-        return ret;
-      }
-      strncpy(retpos, *buf, endptr - *buf);
-      retpos += endptr - *buf;
-      *retpos = 0;
-      *buf = endptr + 1;
-      switch (**buf) {
-      case 0:
-        *buf = NULL;
-        return ret;
-      case '"':
-        *retpos++ = '"';
-        continue;
-      case ',':
-        ++*buf;
-        return ret;
-      default:
-        // Technically invalid CSV.
-        strcpy(retpos, *buf);
-        *buf = NULL;
-        return ret;
-      }
-    }
-  } break;
-  default: {
-    char *endptr = strchr(*buf, ',');
-    if (endptr == NULL) {
-      char *ret = d0_strndup(*buf, strlen(*buf));
-      *buf = NULL;
-      return ret;
-    } else {
-      char *ret = d0_strndup(*buf, endptr - *buf);
-      *buf = endptr + 1;
-      return ret;
-    }
-  }
-  }
-}
-
 char *make_question(config_t *config, answer_state_t **answer_state) {
   FILE *devrandom = fopen("/dev/random", "rb");
   if (devrandom == NULL) {
@@ -201,13 +148,13 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   int match_col = -1, question_col = -1, answer_col = -1;
   char buf[CSV_MAX];
   fgets(buf, sizeof(buf), questions); // Skip CSV header.
-  char *bufptr = buf;
+  csv_buf csvbuf;
+  csv_start(buf, &csvbuf);
   for (int col = 0;; ++col) {
-    char *col_name = csv_read(&bufptr);
+    char *col_name = csv_read(&csvbuf);
     if (col_name == NULL) {
       break;
-    }
-    if (!strcasecmp(col_name, "match")) {
+    } else if (!strcasecmp(col_name, "match")) {
       match_col = col;
     } else if (!strcasecmp(col_name, "question")) {
       question_col = col;
@@ -233,10 +180,12 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     char *match = NULL;
     char *question = NULL;
     char *answer = NULL;
-    char *bufptr = buf;
+    csv_start(buf, &csvbuf);
     for (int col = 0;; ++col) {
-      char *value = csv_read(&bufptr);
-      if (col == match_col) {
+      char *value = csv_read(&csvbuf);
+      if (value == NULL) {
+        break;
+      } else if (col == match_col) {
         match = value;
       } else if (col == question_col) {
         question = value;
