@@ -133,6 +133,11 @@ or specify an exact directory by
     More complex examples can be found in the [`examples`](examples/)
     directory.
 
+NOTE: if you are on Linux, you can replace the `required` keyword by
+`[success=ok new_authtok_reqd=ok auth_err=bad default=ignore]` so that a
+module failure does not block login, but only wrong answers will. This
+will likely not work on BSD systems.
+
 ## Reference
 
 Each argument is of the form `.field=value` or `user.field=value`,
