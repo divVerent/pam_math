@@ -44,8 +44,7 @@ config_t *build_config(const char *user, int argc, const char **argv) {
              sizeof(config->filename));
   config->ignore_case = 0;
   size_t userlen = strlen(user);
-  char matcher[MATCHER_MAX];
-  *matcher = 0;
+  char matcher[MATCHER_MAX] = ".*";
 
   char file_scan_fmt[32];
   snprintf(file_scan_fmt, sizeof(file_scan_fmt), "file=%%%ds", PATH_MAX - 1);
@@ -244,7 +243,10 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   }
   (*answer_state)->answer = accepted_answer;
   (*answer_state)->ignore_case = config->ignore_case;
-  return accepted_question;
+
+  char *formatted_question = d0_asprintf("%s ", accepted_question);
+  free(accepted_question);
+  return formatted_question;
 }
 
 int check_answer(answer_state_t *answer_state, const char *given) {

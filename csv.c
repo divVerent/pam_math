@@ -29,7 +29,7 @@ char *csv_read(char **buf) {
     char *ret = malloc(strlen(*buf) + 1);
     char *retpos = ret;
     for (;;) {
-      ++buf;
+      ++*buf;
       char *endptr = strchr(*buf, '"');
       if (endptr == NULL) {
         // Technically invalid CSV.
