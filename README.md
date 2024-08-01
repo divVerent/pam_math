@@ -22,39 +22,38 @@ conversations.
 
 This includes:
 
--   Login managers:
-    -   GDM
-    -   LightDM
-    -   login
-    -   XDM (requires `.use_utf8=no`)
--   Screen lockers:
-    -   physlock (won't see numbers as they are entered, but will work)
-    -   Plasma's screen lock (will however need to backspace away
-        previous answers before typing new ones)
-    -   vlock (won't see numbers as they are entered, but will work)
-    -   XScreenSaver
-    -   XSecureLock
--   Other:
-    -   doas
-    -   OpenSSH (via `KbdInteractiveAuthentication`)
-    -   su
-    -   sudo
+- Login managers:
+  - GDM
+  - LightDM
+  - login
+  - XDM (requires `.use_utf8=no`)
+- Screen lockers:
+  - physlock (won't see numbers as they are entered, but will work)
+  - Plasma's screen lock (will however need to backspace away previous
+    answers before typing new ones)
+  - vlock (won't see numbers as they are entered, but will work)
+  - XScreenSaver
+  - XSecureLock
+- Other:
+  - doas
+  - OpenSSH (via `KbdInteractiveAuthentication`)
+  - su
+  - sudo
 
 This module is notably not compatible with programs that do not
 implement the full PAM conversation, such as:
 
--   Login managers:
-    -   Entrance
-    -   LXDM
-    -   SDDM
--   Screen lockers:
-    -   i3lock
-    -   screen (however other screen functionality is working fine, so
-        recommending to put `bind x` and `bind ^X` in your `.screenrc`
-        to prevent the `lockscreen` command from being invoked by
-        accident)
-    -   slock
-    -   Swaylock
+- Login managers:
+  - Entrance
+  - LXDM
+  - SDDM
+- Screen lockers:
+  - i3lock
+  - screen (however other screen functionality is working fine, so
+    recommending to put `bind x` and `bind ^X` in your `.screenrc` to
+    prevent the `lockscreen` command from being invoked by accident)
+  - slock
+  - Swaylock
 
 In addition the login prompt of macOS is not supported.
 
@@ -142,16 +141,16 @@ specific user.
 
 The following fields can be set:
 
-| Field     | Default | Meaning                                                                                                        |
-|-----------|---------|----------------------------------------------------------------------------------------------------------------|
-| questions | `3`     | Number of questions to ask (set to 0 to disable).                                                              |
-| attempts  | `3`     | Number of attempts per question (exceeding this fails authentication).                                         |
-| amin      | `0`     | Minimum number to occur in additive math problems posed.                                                       |
-| amax      | `10`    | Maximum number to occur in additive math problems posed.                                                       |
-| mmin      | `2`     | Minimum number to occur in multiplicative math problems posed.                                                 |
-| mmax      | `9`     | Maximum number to occur in multiplicative math problems posed.                                                 |
-| ops       |         | String of math operators to use in problems posed (use `+-*/dqmr` to include all, and leave unset to disable). |
-| use_utf8  | `auto`  | `no` to disable UTF-8 support, `yes` to enable, `auto` to detect by locale                                     |
+| Field       | Default | Meaning                                                                                                        |
+|-------------|---------|----------------------------------------------------------------------------------------------------------------|
+| `questions` | `3`     | Number of questions to ask (set to 0 to disable).                                                              |
+| `attempts`  | `3`     | Number of attempts per question (exceeding this fails authentication).                                         |
+| `amin`      | `0`     | Minimum number to occur in additive math problems posed.                                                       |
+| `amax`      | `10`    | Maximum number to occur in additive math problems posed.                                                       |
+| `mmin`      | `2`     | Minimum number to occur in multiplicative math problems posed.                                                 |
+| `mmax`      | `9`     | Maximum number to occur in multiplicative math problems posed.                                                 |
+| `ops`       |         | String of math operators to use in problems posed (use `+-*/dqmr` to include all, and leave unset to disable). |
+| `use_utf8`  | `auto`  | `no` to disable UTF-8 support, `yes` to enable, `auto` to detect by locale                                     |
 
 The following `ops` are available:
 
@@ -181,6 +180,41 @@ would be asked if `.mmin=2 .mmax=4 .ops=/`:
      8 ÷ 4 = 2
     12 ÷ 4 = 3
     16 ÷ 4 = 4
+
+## Extension: Arbitrary Questions
+
+This repository also contains a second module `pam_questions_file.so`
+that asks random questions from a file.
+
+Its configuration section looks like:
+
+            auth required pam_questions_file.so \
+              .attempts=3 .file=/usr/lib/pam_math/questions.csv \
+              k1.questions=3 k1.match=capitals
+
+It supports the following fields:
+
+| Field         | Default                           | Meaning                                                                                                    |
+|---------------|-----------------------------------|------------------------------------------------------------------------------------------------------------|
+| `questions`   | `3`                               | Number of questions to ask (set to 0 to disable).                                                          |
+| `attempts`    | `3`                               | Number of attempts per question (exceeding this fails authentication).                                     |
+| `file`        | `/usr/lib/pam_math/questions.csv` | Path to a CSV file with questions.                                                                         |
+| `ignore_case` | `0`                               | If set to 1, answers are case insensitive.                                                                 |
+| `match`       | \`\`                              | If set, a full-match regular expression for the CSV file's `match` column to select a subset of questions. |
+
+The questions file is a CSV that must contain a column with the exact
+name `question`, and another column with the exact name `answer`. If a
+column with the exact name `match` exists, it can be used to filter
+questions from the file using the `match` option. See
+`examples/questions.csv` for how it should look. Every question in the
+file should normally end with a question mark (`?`) or a colon (`:`) to
+ensure a useful prompt is shown to the user.
+
+Do note that the questions file must be accessible by the user running
+the login screen, and as such, if this is to be enabled for e.g. a
+screen saver lock, then the question file must be readable by every
+affected user. There is no way to prevent the user from e.g. printing
+out the question file and using that as a help.
 
 ## License
 
