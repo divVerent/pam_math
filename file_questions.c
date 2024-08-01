@@ -50,7 +50,7 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   snprintf(file_scan_fmt, sizeof(file_scan_fmt), "file=%%%ds", PATH_MAX - 1);
   file_scan_fmt[sizeof(file_scan_fmt) - 1] = 0;
   char matcher_scan_fmt[32];
-  snprintf(matcher_scan_fmt, sizeof(matcher_scan_fmt), "matcher=%%%ds",
+  snprintf(matcher_scan_fmt, sizeof(matcher_scan_fmt), "match=%%%ds",
            MATCHER_MAX - 1);
   matcher_scan_fmt[sizeof(matcher_scan_fmt) - 1] = 0;
 
