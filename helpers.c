@@ -1,11 +1,10 @@
 #include "helpers.h"
 
 #include <limits.h> // for INT_MAX
-#include <string.h>
 #include <stdarg.h> // for va_end, va_start, va_list
-#include <stdio.h>  // for fprintf, stderr, vsnprintf
-#include <stdlib.h> // for malloc, free
-#include <string.h> // for memcpy, strlen
+#include <stdio.h>  // for fprintf, vsnprintf, NULL, stderr
+#include <stdlib.h> // for free, malloc
+#include <string.h>
 
 char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
@@ -38,7 +37,7 @@ char *d0_asprintf(const char *restrict fmt, ...) {
 char *d0_strndup(const char *s, size_t n) {
   char *out = malloc(n + 1);
   if (out == NULL) {
-    fprintf(stderr, "ERROR: could not allocate %d bytes\n", (int) (n + 1));
+    fprintf(stderr, "ERROR: could not allocate %d bytes\n", (int)(n + 1));
     return NULL;
   }
   strncpy(out, s, n);

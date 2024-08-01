@@ -1,16 +1,15 @@
-#include "questions.h"
-
-#include <string.h>
-#include <strings.h>
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
 #include <math.h>     // for sqrt
-#include <stdio.h>    // for fprintf, sscanf, stderr, NULL, fclose, fopen
-#include <stdlib.h>   // for abs, malloc
-#include <string.h>   // for strcmp, strncmp, strlen
 #include <regex.h>
+#include <stdio.h>  // for fprintf, sscanf, stderr, NULL, fclose, fopen
+#include <stdlib.h> // for abs, malloc
+#include <string.h>
+#include <string.h> // for strcmp, strncmp, strlen
+#include <strings.h>
 
 #include "helpers.h" // for d0_asprintf
+#include "questions.h"
 
 #define REGERROR_MAX 1024
 #define MATCHER_MAX 1024
@@ -45,8 +44,9 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   }
   config->questions = 3;
   config->attempts = 3;
-  strncpy(config->filename, "/usr/lib/pam_math/questions.csv", sizeof(config->filename));
-  config->filename[sizeof(config->filename)-1] = 0;
+  strncpy(config->filename, "/usr/lib/pam_math/questions.csv",
+          sizeof(config->filename));
+  config->filename[sizeof(config->filename) - 1] = 0;
   config->ignore_case = 0;
   size_t userlen = strlen(user);
   char matcher[MATCHER_MAX];
@@ -82,8 +82,9 @@ config_t *build_config(const char *user, int argc, const char **argv) {
 
   char fullmatcher[MATCHER_MAX + 4];
   snprintf(fullmatcher, sizeof(fullmatcher), "^(%s)$", matcher);
-  fullmatcher[sizeof(fullmatcher)-1] = 0;
-  int reg_error = regcomp(&config->matcher, fullmatcher, REG_EXTENDED | REG_NOSUB);
+  fullmatcher[sizeof(fullmatcher) - 1] = 0;
+  int reg_error =
+      regcomp(&config->matcher, fullmatcher, REG_EXTENDED | REG_NOSUB);
   if (reg_error != 0) {
     char errbuf[REGERROR_MAX];
     *errbuf = 0;
@@ -131,53 +132,52 @@ static char *csv_read(char **buf) {
     return NULL;
   }
   switch (**buf) {
-    case '"': {
-        char *ret = malloc(strlen(*buf) + 1);
-        char *retpos = ret;
-        for (;;) {
-          ++buf;
-          char *endptr = strchr(*buf, '"');
-          if (endptr == NULL) {
-            // Technically invalid CSV.
-            strcpy(retpos, *buf);
-            *buf = NULL;
-            return ret;
-          }
-          strncpy(retpos, *buf, endptr - *buf);
-          retpos += endptr - *buf;
-          *retpos = 0;
-          *buf = endptr + 1;
-          switch (**buf) {
-            case 0:
-              *buf = NULL;
-              return ret;
-            case '"':
-              *retpos++ = '"';
-              continue;
-            case ',':
-              ++*buf;
-              return ret;
-            default:
-              // Technically invalid CSV.
-              strcpy(retpos, *buf);
-              *buf = NULL;
-              return ret;
-          }
-        }
-      }
-      break;
-    default: {
-      char *endptr = strchr(*buf, ',');
+  case '"': {
+    char *ret = malloc(strlen(*buf) + 1);
+    char *retpos = ret;
+    for (;;) {
+      ++buf;
+      char *endptr = strchr(*buf, '"');
       if (endptr == NULL) {
-        char *ret = d0_strndup(*buf, strlen(*buf));
+        // Technically invalid CSV.
+        strcpy(retpos, *buf);
         *buf = NULL;
         return ret;
-      } else {
-        char *ret = d0_strndup(*buf, endptr - *buf);
-        *buf = endptr + 1;
+      }
+      strncpy(retpos, *buf, endptr - *buf);
+      retpos += endptr - *buf;
+      *retpos = 0;
+      *buf = endptr + 1;
+      switch (**buf) {
+      case 0:
+        *buf = NULL;
+        return ret;
+      case '"':
+        *retpos++ = '"';
+        continue;
+      case ',':
+        ++*buf;
+        return ret;
+      default:
+        // Technically invalid CSV.
+        strcpy(retpos, *buf);
+        *buf = NULL;
         return ret;
       }
     }
+  } break;
+  default: {
+    char *endptr = strchr(*buf, ',');
+    if (endptr == NULL) {
+      char *ret = d0_strndup(*buf, strlen(*buf));
+      *buf = NULL;
+      return ret;
+    } else {
+      char *ret = d0_strndup(*buf, endptr - *buf);
+      *buf = endptr + 1;
+      return ret;
+    }
+  }
   }
 }
 
@@ -237,13 +237,16 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       }
     }
     if (question == NULL || answer == NULL) {
-      fprintf(stderr, "WARNING: no question or answer in line found in line %d\n", line);
+      fprintf(stderr,
+              "WARNING: no question or answer in line found in line %d\n",
+              line);
       free(answer);
       free(question);
       free(match);
       continue;
     }
-    if (match_col != -1 && regexec(&config->matcher, match ? match : "", 0, NULL, 0) != 0) {
+    if (match_col != -1 &&
+        regexec(&config->matcher, match ? match : "", 0, NULL, 0) != 0) {
       free(answer);
       free(question);
       free(match);

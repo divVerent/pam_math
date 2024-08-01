@@ -1,5 +1,3 @@
-#include "questions.h" // for config_t, answer_state_t, build_config, check...
-
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
 #include <math.h>     // for sqrt
@@ -8,6 +6,7 @@
 #include <string.h>   // for strcmp, strncmp, strlen
 
 #include "helpers.h" // for d0_asprintf
+#include "questions.h"
 
 enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
 
