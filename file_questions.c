@@ -92,6 +92,10 @@ config_t *build_config(const char *user, int argc, const char **argv) {
     return NULL;
   }
 
+  if (*config->filename == 0) {
+    config->questions = 0;
+  }
+
   return config;
 }
 
@@ -188,13 +192,14 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
 
   // Read questions file.
   FILE *questions = fopen(config->filename, "r");
+  if (questions == NULL) {
+    perror("ERROR: could not open questions file");
+    return NULL;
+  }
 
-  // Pick a question at random.
-  int index = 0;
-  char *accepted_question = NULL;
-  char *accepted_answer = NULL;
-  char buf[CSV_MAX];
+  // Identify CSV columns.
   int match_col = -1, question_col = -1, answer_col = -1;
+  char buf[CSV_MAX];
   fgets(buf, sizeof(buf), questions); // Skip CSV header.
   char *bufptr = buf;
   for (int col = 0;; ++col) {
@@ -213,8 +218,15 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   }
   if (question_col == -1 || answer_col == -1) {
     fprintf(stderr, "ERROR: no column named question or answer found\n");
+    fclose(questions);
+    fclose(devrandom);
     return NULL;
   }
+
+  // Pick a question at random.
+  int index = 0;
+  char *accepted_question = NULL;
+  char *accepted_answer = NULL;
   int line = 1;
   while (fgets(buf, sizeof(buf), questions)) {
     ++line;
@@ -264,14 +276,13 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   }
 
   fclose(questions);
+  fclose(devrandom);
 
   if (accepted_answer == NULL) {
     fprintf(stderr, "ERROR: could not find a single question\n");
     free(accepted_question);
     return NULL;
   }
-
-  fclose(devrandom);
 
   *answer_state = malloc(sizeof(answer_state_t));
   if (*answer_state == NULL) {
