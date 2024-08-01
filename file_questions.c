@@ -2,13 +2,12 @@
 
 #include <limits.h>  // for PATH_MAX, UINT_MAX
 #include <regex.h>   // for regcomp, regerror, regexec, regfree, REG_EXTE...
-#include <stdio.h>   // for NULL, fprintf, sscanf, stderr, fclose, fgets
+#include <stdio.h>   // for NULL, fprintf, sscanf, fclose, stderr, fgets
 #include <stdlib.h>  // for free, malloc
-#include <string.h>  // for strlen, strchr, strcpy, strncpy, strcmp, strncmp
+#include <string.h>  // for strcmp, strlen, strncmp, strncpy
 #include <strings.h> // for strcasecmp
 
-#include "csv.h"     // for csv_read
-#include "helpers.h" // for d0_strndup
+#include "csv.h" // for csv_read, csv_start, csv_buf
 
 #define REGERROR_MAX 1024
 #define MATCHER_MAX 1024
