@@ -50,6 +50,9 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
       if (retval != PAM_SUCCESS) {
         free(question);
         free_answer(answer_state);
+        if (retval == PAM_CONV_AGAIN) {
+          return PAM_INCOMPLETE;
+        }
         fprintf(stderr, "ERROR: could not get PAM conversation: %s\n",
                 pam_strerror(pamh, retval));
         return retval;
@@ -87,7 +90,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
     struct pam_response *resp = NULL;
     retval = conv->conv(1, &pmsg, &resp, conv->appdata_ptr);
     free(msg_error);
-    if (retval != PAM_SUCCESS) {
+    if (retval != PAM_SUCCESS && retval != PAM_CONV_AGAIN) {
       return retval;
     }
     free(resp[0].resp);
