@@ -5,6 +5,7 @@
 #include <stdio.h>  // for fprintf, stderr, vsnprintf
 #include <stdlib.h> // for malloc, free
 #include <string.h> // for memcpy, strlen
+#include <time.h>   // for time
 
 char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
@@ -58,4 +59,27 @@ char *d0_strndup(const char *s, size_t n) {
   }
   d0_strlcpy(out, s, size);
   return out;
+}
+
+static int want_init_random = 1;
+unsigned int random_seed;
+unsigned int random_buf;
+
+void maybe_init_random() {
+  int do_init_random = want_init_random;
+  want_init_random = 1;
+  if (do_init_random) {
+    random_seed = time(NULL);
+  }
+  random_buf = random_seed;
+}
+
+void skip_next_init_random() { want_init_random = 0; }
+
+int randint(int n) {
+  // This is POSIX.1-2001's PRNG.
+  // Better PRNG welcome.
+  random_buf = random_buf * 1103515245 + 12345;
+  int r = (random_buf / 65536) % 32768;
+  return r % n;
 }

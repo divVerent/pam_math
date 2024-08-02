@@ -2,11 +2,11 @@
 
 #include "questions.h" // for config_t, answer_state_t, build_config, check...
 
-#include <limits.h>  // for PATH_MAX, UINT_MAX
+#include <limits.h>  // for PATH_MAX
 #include <regex.h>   // for regcomp, regerror, regexec, regfree, REG_EXTE...
-#include <stdio.h>   // for NULL, fprintf, sscanf, fclose, stderr, snprintf
+#include <stdio.h>   // for NULL, fprintf, sscanf, stderr, snprintf, fclose
 #include <stdlib.h>  // for free, malloc
-#include <string.h>  // for strcmp, strlen, strncmp
+#include <string.h>  // for strlen, strcmp, strncmp
 #include <strings.h> // for strcasecmp
 
 #include "csv.h"     // for csv_read, csv_start, csv_buf
@@ -119,35 +119,11 @@ struct answer_state_s {
   int ignore_case;
 };
 
-static int randint(FILE *devrandom, int min, int max) {
-  unsigned int d = (unsigned int)max - (unsigned int)min;
-  unsigned int rmax = (UINT_MAX / d) * d;
-  for (;;) {
-    unsigned int r;
-    if (fread(&r, sizeof(r), 1, devrandom) != 1) {
-      fprintf(
-          stderr,
-          "ERROR: /dev/random did not read exactly %d bytes; trying again...",
-          (int)sizeof(r));
-    }
-    if (r < rmax) {
-      return min + r % d;
-    }
-  }
-}
-
 char *make_question(config_t *config, answer_state_t **answer_state) {
-  FILE *devrandom = fopen("/dev/random", "rb");
-  if (devrandom == NULL) {
-    perror("ERROR: could not open /dev/random");
-    return NULL;
-  }
-
   // Read questions file.
   FILE *questions = fopen(config->filename, "r");
   if (questions == NULL) {
     perror("ERROR: could not open questions file");
-    fclose(devrandom);
     return NULL;
   }
 
@@ -173,7 +149,6 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   if (question_col == -1 || answer_col == -1) {
     fprintf(stderr, "ERROR: no column named question or answer found\n");
     fclose(questions);
-    fclose(devrandom);
     return NULL;
   }
 
@@ -219,7 +194,7 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     }
     free(match);
     ++index;
-    if (randint(devrandom, 0, index) == 0) {
+    if (randint(index) == 0) {
       free(accepted_answer);
       free(accepted_question);
       accepted_question = question;
@@ -231,7 +206,6 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   }
 
   fclose(questions);
-  fclose(devrandom);
 
   if (accepted_answer == NULL) {
     fprintf(stderr, "ERROR: could not find a single question\n");

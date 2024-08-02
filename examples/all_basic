@@ -2,4 +2,4 @@
 # multiplication of one digit and addition of two digit numbers.
 
 auth required pam_math.so \
-	user.questions=2 user.amin=1 user.amax=100 user.mmin=2 user.mmax=9 user.ops=+-*/
+	user.questions=2 user.amin=1 user.amax=2 user.mmin=2 user.mmax=4 user.ops=+-*/

@@ -1,9 +1,11 @@
-#include "helpers.h"              // for d0_asprintf
-#include "questions.h"            // for free_answer, build_config, check_a...
+#include <security/_pam_types.h>  // for PAM_CONV_AGAIN, PAM_INCOMPLETE
 #include <security/pam_appl.h>    // for pam_response, PAM_SUCCESS, pam_mes...
 #include <security/pam_modules.h> // for pam_handle_t, PAM_EXTERN, pam_get_...
 #include <stdio.h>                // for fprintf, NULL, stderr
 #include <stdlib.h>               // for free
+
+#include "helpers.h"   // for d0_asprintf, maybe_init_random
+#include "questions.h" // for free_answer, build_config, check_a...
 
 static int ask_questions(pam_handle_t *pamh, config_t *config) {
   const void *convp;
@@ -51,6 +53,7 @@ static int ask_questions(pam_handle_t *pamh, config_t *config) {
         free(question);
         free_answer(answer_state);
         if (retval == PAM_CONV_AGAIN) {
+          skip_next_init_random();
           return PAM_INCOMPLETE;
         }
         fprintf(stderr, "ERROR: could not get PAM conversation: %s\n",
@@ -137,8 +140,10 @@ PAM_EXTERN int pam_sm_authenticate(pam_handle_t *pamh,
                                    int flags __attribute__((unused)), int argc,
                                    const char **argv) {
   int retval;
-
   const char *user;
+
+  maybe_init_random();
+
   retval = pam_get_user(pamh, &user, "Username: ");
   if (retval != PAM_SUCCESS) {
     fprintf(stderr, "ERROR: could not query username: %s\n",

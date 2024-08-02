@@ -1,9 +1,9 @@
 #include "questions.h" // for config_t, answer_state_t, build_config, check...
 
 #include <langinfo.h> // for nl_langinfo, CODESET
-#include <limits.h>   // for INT_MAX, INT_MIN, UINT_MAX
+#include <limits.h>   // for INT_MAX, INT_MIN
 #include <math.h>     // for sqrt
-#include <stdio.h>    // for fprintf, stderr, sscanf, NULL, fclose, FILE
+#include <stdio.h>    // for fprintf, stderr, sscanf, NULL, size_t
 #include <stdlib.h>   // for abs, free, malloc
 #include <string.h>   // for strcmp, strncmp, strlen
 
@@ -198,27 +198,27 @@ config_t *build_config(const char *user, int argc, const char **argv) {
   }
 
   // There must be at least two options for each range.
-  if (config->amax < config->amin + 2) {
+  if (config->amax < config->amin + 1) {
     fprintf(stderr, "Invalid additive range: %d to %d - expanding.\n",
             config->amin, config->amax);
     // To avoid integer overflow, we pick one of the two possible ways to fix it
     // - namely whichever grows towards zero.
     if (config->amin < 0) {
-      config->amax = config->amin + 2;
+      config->amax = config->amin + 1;
     } else {
-      config->amin = config->amax - 2;
+      config->amin = config->amax - 1;
     }
     fixed = 1;
   }
-  if (config->mmax < config->mmin + 2) {
+  if (config->mmax < config->mmin + 1) {
     fprintf(stderr, "Invalid multiplicative range: %d to %d - expanding.\n",
             config->mmin, config->mmax);
     // To avoid integer overflow, we pick one of the two possible ways to fix it
     // - namely whichever grows towards zero.
     if (config->mmin < 0) {
-      config->mmax = config->mmin + 2;
+      config->mmax = config->mmin + 1;
     } else {
-      config->mmin = config->mmax - 2;
+      config->mmin = config->mmax - 1;
     }
     fixed = 1;
   }
@@ -249,34 +249,11 @@ struct answer_state_s {
   int answer;
 };
 
-static int randint(FILE *devrandom, int min, int max) {
-  unsigned int d = (unsigned int)max - (unsigned int)min;
-  unsigned int rmax = (UINT_MAX / d) * d;
-  for (;;) {
-    unsigned int r;
-    if (fread(&r, sizeof(r), 1, devrandom) != 1) {
-      fprintf(
-          stderr,
-          "ERROR: /dev/random did not read exactly %d bytes; trying again...",
-          (int)sizeof(r));
-    }
-    if (r < rmax) {
-      return min + r % d;
-    }
-  }
-}
-
 char *make_question(config_t *config, answer_state_t **answer_state) {
-  FILE *devrandom = fopen("/dev/random", "rb");
-  if (devrandom == NULL) {
-    perror("ERROR: could not open /dev/random");
-    return NULL;
-  }
-
   int op;
 
   do {
-    op = randint(devrandom, 0, NUM_OPS - 1);
+    op = randint(NUM_OPS);
   } while ((config->ops & (1 << op)) == 0);
 
   int a, b, c;
@@ -287,20 +264,20 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     int q, r, s;
     switch (op) {
     case ADD:
-      a = randint(devrandom, config->amin, config->amax);
-      b = randint(devrandom, config->amin, config->amax);
+      a = config->amin + randint(config->amax - config->amin + 1);
+      b = config->amin + randint(config->amax - config->amin + 1);
       c = a + b;
       op_str = "+";
       break;
     case SUB:
-      c = randint(devrandom, config->amin, config->amax);
-      b = randint(devrandom, config->amin, config->amax);
+      c = config->amin + randint(config->amax - config->amin + 1);
+      b = config->amin + randint(config->amax - config->amin + 1);
       a = c + b;
       op_str = "-";
       break;
     case MUL:
-      a = randint(devrandom, config->mmin, config->mmax);
-      b = randint(devrandom, config->mmin, config->mmax);
+      a = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
       c = a * b;
       if (config->use_utf8) {
         op_str = "×";
@@ -309,8 +286,8 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       }
       break;
     case DIV:
-      c = randint(devrandom, config->mmin, config->mmax);
-      b = randint(devrandom, config->mmin, config->mmax);
+      c = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
       if (b == 0) {
         continue;
       }
@@ -322,40 +299,40 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       }
       break;
     case MOD:
-      q = randint(devrandom, config->mmin, config->mmax);
-      b = randint(devrandom, config->mmin, config->mmax);
+      q = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
       if (b == 0) {
         continue;
       }
       s = (b < 0 ? -1 : +1);
       // mod result always agrees in sign with divisor.
-      c = s * randint(devrandom, 0, abs(b) - 1);
+      c = s * randint(abs(b));
       a = q * b + c;
       op_str = "mod";
       break;
     case REM:
-      q = randint(devrandom, config->mmin, config->mmax);
-      b = randint(devrandom, config->mmin, config->mmax);
+      q = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
       if (b == 0) {
         continue;
       }
       // rem result always agrees in sign with dividend.
       // The dividend is not computed yet though, but only the result is!
       s = (b < 0 ? -1 : +1);
-      s *= (q < 0 ? -1 : q > 0 ? +1 : randint(devrandom, 0, 1) * 2 - 1);
-      c = s * randint(devrandom, 0, abs(b) - 1);
+      s *= (q < 0 ? -1 : q > 0 ? +1 : randint(2) * 2 - 1);
+      c = s * randint(abs(b));
       a = q * b + c;
       op_str = "rem";
       break;
     case DIV_WITH_MOD:
-      c = randint(devrandom, config->mmin, config->mmax);
-      b = randint(devrandom, config->mmin, config->mmax);
+      c = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
       if (b == 0) {
         continue;
       }
       s = (b < 0 ? -1 : +1);
       // mod result always agrees in sign with divisor.
-      r = s * randint(devrandom, 0, abs(b) - 1);
+      r = s * randint(abs(b));
       a = c * b + r;
       if (config->use_utf8) {
         op_prefix = "⌊";
@@ -372,16 +349,16 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       // Incorrect. Login failed.
       // In Haskell, both quot and div are 3 here.
       // Something is wrong here...
-      c = randint(devrandom, config->mmin, config->mmax);
-      b = randint(devrandom, config->mmin, config->mmax);
+      c = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
       if (b == 0) {
         continue;
       }
       // rem result always agrees in sign with dividend.
       // The dividend is not computed yet though, but only the result is!
       s = (b < 0 ? -1 : +1);
-      s *= (c < 0 ? -1 : c > 0 ? +1 : randint(devrandom, 0, 1) * 2 - 1);
-      r = s * randint(devrandom, 0, abs(b) - 1);
+      s *= (c < 0 ? -1 : c > 0 ? +1 : randint(2) * 2 - 1);
+      r = s * randint(abs(b));
       a = c * b + r;
       op_prefix = "[";
       if (config->use_utf8) {
@@ -394,12 +371,9 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     default:
       fprintf(stderr, "ERROR: unreachable code: unsupported operation: %d\n",
               op);
-      fclose(devrandom);
       return NULL;
     }
   } while (op_str == NULL);
-
-  fclose(devrandom);
 
   *answer_state = malloc(sizeof(answer_state_t));
   if (*answer_state == NULL) {
