@@ -9,7 +9,18 @@
 
 #include "helpers.h" // for d0_asprintf
 
-enum { ADD, SUB, MUL, DIV, MOD, REM, DIV_WITH_MOD, QUOT_WITH_REM, NUM_OPS };
+enum {
+  ADD,
+  SUB,
+  MUL,
+  DIV,
+  MOD,
+  REM,
+  DIV_WITH_MOD,
+  QUOT_WITH_REM,
+  CANCEL,
+  NUM_OPS
+};
 
 struct config_s {
   int questions; // Used by pam_math.c.
@@ -38,6 +49,19 @@ int num_attempts(config_t *config) { return config->attempts; }
 #if INT_MIN + INT_MAX > 0
 #error positive integer range must be smaller or equal negative integer range
 #endif
+
+static int gcd(int a, int b) {
+  if (a < 0) {
+    return gcd(-a, b);
+  }
+  if (b < 0) {
+    return gcd(a, -b);
+  }
+  if (b == 0) {
+    return a;
+  }
+  return gcd(b, a % b);
+}
 
 config_t *build_config(const char *user, int argc, const char **argv) {
   config_t *config = malloc(sizeof(config_t));
@@ -101,6 +125,8 @@ config_t *build_config(const char *user, int argc, const char **argv) {
           config->ops |= (1 << DIV_WITH_MOD);
         } else if (*p == 'q') {
           config->ops |= (1 << QUOT_WITH_REM);
+        } else if (*p == 'c') {
+          config->ops |= (1 << CANCEL);
         } else {
           fprintf(stderr, "Unexpected %.*sops= character in config: %c\n",
                   (int)(field - arg), arg, *p);
@@ -246,7 +272,8 @@ config_t *build_config(const char *user, int argc, const char **argv) {
 void free_config(config_t *config) { free(config); }
 
 struct answer_state_s {
-  int answer;
+  int answer_num;
+  char *answer_str;
 };
 
 char *make_question(config_t *config, answer_state_t **answer_state) {
@@ -256,7 +283,9 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     op = randint(NUM_OPS);
   } while ((config->ops & (1 << op)) == 0);
 
-  int a, b, c;
+  int a_neg_parens = 1;
+  int a, b, c = 0;
+  char *c_str = NULL;
   const char *op_prefix = "";
   const char *op_str = NULL;
   const char *op_suffix = "";
@@ -368,6 +397,31 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       }
       op_suffix = "]";
       break;
+    case CANCEL:
+      a = config->mmin + randint(config->mmax - config->mmin + 1);
+      b = config->mmin + randint(config->mmax - config->mmin + 1);
+      if (gcd(a, b) != 1) {
+        continue;
+      }
+      if (b < 0) {
+        a = -a;
+        b = -b;
+      }
+      s = config->mmin + randint(config->mmax - config->mmin + 1);
+      if (s == 0) {
+        continue;
+      }
+      a_neg_parens = 0;
+      op_prefix = "the result of cancelling ";
+      op_str = "/";
+      if (b == 1) {
+        c = a;
+      } else {
+        c_str = d0_asprintf("%d / %d", a, b);
+      }
+      a *= s;
+      b *= s;
+      break;
     default:
       fprintf(stderr, "ERROR: unreachable code: unsupported operation: %d\n",
               op);
@@ -378,28 +432,45 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
   *answer_state = malloc(sizeof(answer_state_t));
   if (*answer_state == NULL) {
     fprintf(stderr, "ERROR: could not allocate answer_state\n");
+    free(c_str);
     return NULL;
   }
-  (*answer_state)->answer = c;
+  (*answer_state)->answer_num = c;
+  (*answer_state)->answer_str = c_str;
   return d0_asprintf("What is %s%s%d%s %s %s%d%s%s? ",
-                     op_prefix,                             //
-                     a < 0 ? "(" : "", a, a < 0 ? ")" : "", //
+                     op_prefix, //
+                     (a_neg_parens && a < 0) ? "(" : "", a,
+                     (a_neg_parens && a < 0) ? ")" : "",    //
                      op_str,                                //
                      b < 0 ? "(" : "", b, b < 0 ? ")" : "", //
                      op_suffix);
 }
 
 char *get_answer(answer_state_t *answer_state) {
-  return d0_asprintf("%d", answer_state->answer);
+  if (answer_state->answer_str) {
+    return d0_strndup(answer_state->answer_str,
+                      strlen(answer_state->answer_str));
+  }
+  return d0_asprintf("%d", answer_state->answer_num);
 }
 
 int check_answer(answer_state_t *answer_state, const char *given) {
-  int given_int;
-  char too_much;
-  if (sscanf(given, "%d%c", &given_int, &too_much) != 1) {
-    return 0; // Invalid format.
+  if (answer_state->answer_str) {
+    return !strcmp(given, answer_state->answer_str);
+  } else {
+    int given_int;
+    char too_much;
+    if (sscanf(given, "%d%c", &given_int, &too_much) != 1) {
+      return 0; // Invalid format.
+    }
+    return given_int == answer_state->answer_num;
   }
-  return given_int == answer_state->answer;
 }
 
-void free_answer(answer_state_t *answer_state) { free(answer_state); }
+void free_answer(answer_state_t *answer_state) {
+  if (answer_state == NULL) {
+    return;
+  }
+  free(answer_state->answer_str);
+  free(answer_state);
+}

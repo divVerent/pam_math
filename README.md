@@ -22,38 +22,39 @@ conversations.
 
 This includes:
 
-- Login managers:
-  - GDM
-  - LightDM
-  - login
-  - XDM (requires `.use_utf8=no`)
-- Screen lockers:
-  - physlock (won't see numbers as they are entered, but will work)
-  - Plasma's screen lock (will however need to backspace away previous
-    answers before typing new ones)
-  - vlock (won't see numbers as they are entered, but will work)
-  - XScreenSaver
-  - XSecureLock
-- Other:
-  - doas
-  - OpenSSH (via `KbdInteractiveAuthentication`)
-  - su
-  - sudo
+-   Login managers:
+    -   GDM
+    -   LightDM
+    -   login
+    -   XDM (requires `.use_utf8=no`)
+-   Screen lockers:
+    -   physlock (won't see numbers as they are entered, but will work)
+    -   Plasma's screen lock (will however need to backspace away
+        previous answers before typing new ones)
+    -   vlock (won't see numbers as they are entered, but will work)
+    -   XScreenSaver
+    -   XSecureLock
+-   Other:
+    -   doas
+    -   OpenSSH (via `KbdInteractiveAuthentication`)
+    -   su
+    -   sudo
 
 This module is notably not compatible with programs that do not
 implement the full PAM conversation, such as:
 
-- Login managers:
-  - Entrance
-  - LXDM
-  - SDDM
-- Screen lockers:
-  - i3lock
-  - screen (however other screen functionality is working fine, so
-    recommending to put `bind x` and `bind ^X` in your `.screenrc` to
-    prevent the `lockscreen` command from being invoked by accident)
-  - slock
-  - Swaylock
+-   Login managers:
+    -   Entrance
+    -   LXDM
+    -   SDDM
+-   Screen lockers:
+    -   i3lock
+    -   screen (however other screen functionality is working fine, so
+        recommending to put `bind x` and `bind ^X` in your `.screenrc`
+        to prevent the `lockscreen` command from being invoked by
+        accident)
+    -   slock
+    -   Swaylock
 
 In addition the login prompt of macOS is not supported.
 
@@ -159,16 +160,17 @@ The following fields can be set:
 
 The following `ops` are available:
 
-| Character | Operation               | Formula               | Limits                     | Notes                                         |
-|-----------|-------------------------|-----------------------|----------------------------|-----------------------------------------------|
-| `+`       | Addition                | `x = a + b`           | `amin ≤ a, b ≤ amax`       |                                               |
-| `-`       | Subtraction             | `x = a - b`           | `amin ≤ b, x ≤ amax`       |                                               |
-| `*`       | Multiplication          | `x = a * b`           | `mmin ≤ a, b ≤ mmax`       |                                               |
-| `/`       | Remainder-less division | `x = a / b`           | `mmin ≤ b, x ≤ mmax`       |                                               |
-| `d`       | Division w/ remainder   | `x = ⌊a / b⌋`         | `mmin ≤ b, x ≤ mmax`       | Remainder has same sign as `b` (Python style) |
-| `q`       | Division w/ remainder   | `x = [a / b]`         | `mmin ≤ b, x ≤ mmax`       | Remainder has same sign as `a` (C style)      |
-| `m`       | Division remainder      | `x = a - b * ⌊a / b⌋` | `mmin ≤ b, ⌊a / b⌋ ≤ mmax` | Remainder has same sign as `b` (Python style) |
-| `r`       | Division remainder      | `x = a - b * [a / b]` | `mmin ≤ b, [a / b] ≤ mmax` | Remainder has same sign as `a` (C style)      |
+| Character | Operation               | Formula               | Limits                      | Notes                                                                                    |
+|-----------|-------------------------|-----------------------|-----------------------------|------------------------------------------------------------------------------------------|
+| `+`       | Addition                | `x = a + b`           | `amin ≤ a, b ≤ amax`        |                                                                                          |
+| `-`       | Subtraction             | `x = a - b`           | `amin ≤ b, x ≤ amax`        |                                                                                          |
+| `*`       | Multiplication          | `x = a * b`           | `mmin ≤ a, b ≤ mmax`        |                                                                                          |
+| `/`       | Remainder-less division | `x = a / b`           | `mmin ≤ b, x ≤ mmax`        |                                                                                          |
+| `d`       | Division w/ remainder   | `x = ⌊a / b⌋`         | `mmin ≤ b, x ≤ mmax`        | Remainder has same sign as `b` (Python style)                                            |
+| `q`       | Division w/ remainder   | `x = [a / b]`         | `mmin ≤ b, x ≤ mmax`        | Remainder has same sign as `a` (C style)                                                 |
+| `m`       | Division remainder      | `x = a - b * ⌊a / b⌋` | `mmin ≤ b, ⌊a / b⌋ ≤ mmax`  | Remainder has same sign as `b` (Python style)                                            |
+| `r`       | Division remainder      | `x = a - b * [a / b]` | `mmin ≤ b, [a / b] ≤ mmax`  | Remainder has same sign as `a` (C style)                                                 |
+| `c`       | Cancel fraction         | `cancel a / b`        | `mmin ≤ a/g, b/g, g ≤ mmax` | Solution has form "a / b", possibly a minus sign in front of a, / b is left out if b = 1 |
 
 Note that the `min` and `max` pairs of options apply directly for
 addition and multiplication problems, while for subtraction or divison

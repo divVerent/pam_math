@@ -1,4 +1,4 @@
-# This configures that user `user` needs to learn division, including division with remainder and negatives.
+# This configures that user `user` needs to learn division, including division with remainder and negatives, and fraction cancelling.
 
 auth required pam_math.so \
-	user.questions=1 user.mmin=-9 user.mmax=9 user.ops=/dmqr
+	user.questions=1 user.mmin=-9 user.mmax=9 user.ops=/dmqrc
