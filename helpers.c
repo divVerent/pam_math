@@ -1,11 +1,18 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include "helpers.h"
 
 #include <limits.h> // for INT_MAX
 #include <stdarg.h> // for va_end, va_start, va_list
+#include <stdint.h> // for uint32_t
 #include <stdio.h>  // for fprintf, stderr, vsnprintf
 #include <stdlib.h> // for malloc, free
 #include <string.h> // for memcpy, strlen
-#include <time.h>   // for time
+#include <time.h>   // for time, clock_gettime
+
+#ifdef __linux__
+#include <sys/random.h> // for getrandom
+#endif
 
 char *d0_asprintf(const char *restrict fmt, ...) {
   va_list ap;
@@ -62,14 +69,26 @@ char *d0_strndup(const char *s, size_t n) {
 }
 
 static int want_init_random = 1;
-unsigned int random_seed;
-unsigned int random_buf;
+uint32_t random_seed;
+uint32_t random_buf;
 
 void maybe_init_random() {
   int do_init_random = want_init_random;
   want_init_random = 1;
   if (do_init_random) {
-    random_seed = time(NULL);
+#ifdef __linux__
+    if (getrandom(&random_seed, sizeof(random_seed), 0) ==
+        sizeof(random_seed)) {
+      goto got_seed;
+    }
+    perror("getrandom");
+#endif
+    random_seed = (uint32_t)time(NULL);
+    struct timespec ts;
+    if (!clock_gettime(CLOCK_REALTIME, &ts)) {
+      random_seed ^= ts.tv_nsec;
+    }
+  got_seed:;
   }
   random_buf = random_seed;
 }
