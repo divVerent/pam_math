@@ -1,5 +1,6 @@
 #include "questions.h" // for config_t, answer_state_t, build_config, check...
 
+#include <ctype.h>    // for isspace
 #include <langinfo.h> // for nl_langinfo, CODESET
 #include <limits.h>   // for INT_MAX, INT_MIN
 #include <math.h>     // for sqrt
@@ -420,7 +421,7 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
       if (b == 1) {
         c = a;
       } else {
-        c_str = d0_asprintf("%d / %d", a, b);
+        c_str = d0_asprintf("%d/%d", a, b);
       }
       a *= s;
       b *= s;
@@ -459,7 +460,18 @@ char *get_answer(answer_state_t *answer_state) {
 
 int check_answer(answer_state_t *answer_state, const char *given) {
   if (answer_state->answer_str) {
-    return !strcmp(given, answer_state->answer_str);
+    char *given_without_spaces = malloc(strlen(given) + 1);
+    const char *in = given;
+    char *out = given_without_spaces;
+    do {
+      if (isspace(*in)) {
+        continue;
+      }
+      *out++ = *in;
+    } while (*in++);
+    int result = !strcmp(given_without_spaces, answer_state->answer_str);
+    free(given_without_spaces);
+    return result;
   } else {
     int given_int;
     char too_much;
