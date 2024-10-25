@@ -400,6 +400,9 @@ char *make_question(config_t *config, answer_state_t **answer_state) {
     case CANCEL:
       a = config->mmin + randint(config->mmax - config->mmin + 1);
       b = config->mmin + randint(config->mmax - config->mmin + 1);
+      if (b == 0) {
+        continue;
+      }
       if (gcd(a, b) != 1) {
         continue;
       }
